@@ -1,25 +1,71 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getTransactions, getCategories, deleteTransaction } from '../services/storageService';
-import { TransactionType } from '../types';
+import { getTransactionById, getCategories, deleteTransaction } from '../services/databaseService';
+import { TransactionType, Transaction, Category } from '../types';
 
 const TransactionDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const transaction = getTransactions().find(t => t.id === id);
-  const categories = getCategories();
-  const category = categories.find(c => c.id === transaction?.categoryId);
+  const [transaction, setTransaction] = useState<Transaction | null>(null);
+  const [category, setCategory] = useState<Category | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadData = async () => {
+      if (!id) {
+        navigate('/');
+        return;
+      }
+
+      try {
+        const [transactionData, categoriesData] = await Promise.all([
+          getTransactionById(id),
+          getCategories()
+        ]);
+
+        if (!transactionData) {
+          navigate('/');
+          return;
+        }
+
+        setTransaction(transactionData);
+        const cat = categoriesData.find(c => c.id === transactionData.categoryId);
+        setCategory(cat || null);
+      } catch (error) {
+        console.error('Error loading transaction:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, [id, navigate]);
+
+  const handleDelete = async () => {
+    if (!transaction) return;
+
+    if (confirm('Bu işlemi silmek istediğinize emin misiniz?')) {
+      try {
+        await deleteTransaction(transaction.id);
+        navigate('/');
+      } catch (error) {
+        console.error('Error deleting transaction:', error);
+        alert('İşlem silinemedi. Lütfen tekrar deneyin.');
+      }
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   if (!transaction) {
     return <div className="p-10 text-center">İşlem bulunamadı.</div>;
   }
-
-  const handleDelete = () => {
-    if (confirm('Bu işlemi silmek istediğinize emin misiniz?')) {
-      deleteTransaction(transaction.id);
-      navigate('/');
-    }
-  };
 
   const isIncome = transaction.type === TransactionType.INCOME;
 
@@ -69,7 +115,7 @@ const TransactionDetail: React.FC = () => {
              )}
         </div>
       </div>
-      
+
       <div className="p-4 bg-background-light dark:bg-background-dark border-t border-gray-200 dark:border-gray-800">
            <button onClick={() => navigate(-1)} className="w-full h-14 bg-primary text-[#102216] rounded-xl font-bold text-lg">
                Tamam

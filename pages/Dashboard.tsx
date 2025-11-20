@@ -1,25 +1,59 @@
-import React, { useMemo } from 'react';
-import { getTransactions, getCategories } from '../services/storageService';
-import { TransactionType } from '../types';
+import React, { useState, useEffect, useMemo } from 'react';
+import { getTransactions, getCategories, getDashboardStats } from '../services/databaseService';
+import { Transaction, Category, TransactionType } from '../types';
 import TransactionCard from '../components/TransactionCard';
 
 const Dashboard: React.FC = () => {
-  const transactions = getTransactions();
-  const categories = getCategories();
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [stats, setStats] = useState({ income: 0, expense: 0, balance: 0, monthlyBudget: 0, monthlySpent: 0 });
+  const [loading, setLoading] = useState(true);
 
-  const stats = useMemo(() => {
-    const income = transactions.filter(t => t.type === TransactionType.INCOME).reduce((acc, curr) => acc + curr.amount, 0);
-    const expense = transactions.filter(t => t.type === TransactionType.EXPENSE).reduce((acc, curr) => acc + curr.amount, 0);
-    return {
-      income,
-      expense,
-      balance: income - expense
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        const [transactionsData, categoriesData, dashboardStats] = await Promise.all([
+          getTransactions(),
+          getCategories(),
+          getDashboardStats()
+        ]);
+        setTransactions(transactionsData);
+        setCategories(categoriesData);
+        setStats({
+          income: dashboardStats.totalIncome,
+          expense: dashboardStats.totalExpense,
+          balance: dashboardStats.balance,
+          monthlyBudget: dashboardStats.monthlyBudget,
+          monthlySpent: dashboardStats.monthlySpent
+        });
+      } catch (error) {
+        console.error('Error loading dashboard data:', error);
+      } finally {
+        setLoading(false);
+      }
     };
-  }, [transactions]);
+
+    loadData();
+  }, []);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(amount);
   };
+
+  const budgetPercentage = stats.monthlyBudget > 0 ? (stats.monthlySpent / stats.monthlyBudget) * 100 : 0;
+  const budgetRemaining = stats.monthlyBudget - stats.monthlySpent;
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-gray-500">Yükleniyor...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="pb-24 pt-safe">
@@ -50,7 +84,7 @@ const Dashboard: React.FC = () => {
           <p className="text-xl font-bold text-red-500">{formatCurrency(stats.expense)}</p>
         </div>
       </div>
-      
+
       <div className="px-4 mt-4">
         <div className="w-full rounded-2xl bg-primary p-5 text-[#102216] shadow-lg shadow-primary/20 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-10 -mt-10 backdrop-blur-3xl"></div>
@@ -63,12 +97,19 @@ const Dashboard: React.FC = () => {
       <div className="flex flex-col gap-3 p-4 mt-2">
         <div className="flex gap-6 justify-between items-end">
           <p className="text-base font-bold">Aylık Bütçe</p>
-          <p className="text-sm font-medium opacity-70">₺1.950 / ₺3.000</p>
+          <p className="text-sm font-medium opacity-70">
+            {formatCurrency(stats.monthlySpent)} / {formatCurrency(stats.monthlyBudget)}
+          </p>
         </div>
         <div className="w-full rounded-full bg-gray-200 dark:bg-gray-800 h-3">
-          <div className="bg-primary h-3 rounded-full transition-all duration-500" style={{ width: '65%' }}></div>
+          <div
+            className="bg-primary h-3 rounded-full transition-all duration-500"
+            style={{ width: `${Math.min(budgetPercentage, 100)}%` }}
+          ></div>
         </div>
-        <p className="text-sm opacity-60 text-right">Kalan: ₺1.050</p>
+        <p className="text-sm opacity-60 text-right">
+          Kalan: {formatCurrency(Math.max(budgetRemaining, 0))}
+        </p>
       </div>
 
       {/* Filter Chips */}
