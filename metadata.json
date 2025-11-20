@@ -1,0 +1,7 @@
+{
+  "name": "Fishek",
+  "description": "A mobile-first personal finance tracker powered by Gemini for receipt scanning.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
