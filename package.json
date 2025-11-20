@@ -4,22 +4,31 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview",
+    "dev": "next dev -p 3000",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
     "db:init": "node scripts/initDatabase.js"
   },
   "dependencies": {
+    "@auth/drizzle-adapter": "^1.11.1",
     "@google/genai": "^1.30.0",
     "@neondatabase/serverless": "^1.0.2",
+    "drizzle-orm": "^0.44.7",
+    "next": "^16.0.3",
+    "next-auth": "5.0.0-beta.30",
+    "pg": "^8.13.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "react-router-dom": "^7.9.6"
+    "react-router-dom": "^7.9.6",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
+    "@types/react": "19.2.6",
     "@vitejs/plugin-react": "^5.0.0",
     "dotenv": "^17.2.3",
+    "drizzle-kit": "^0.31.7",
     "typescript": "~5.8.2",
     "vite": "^6.2.0"
   }

@@ -7,11 +7,12 @@
  * Run with: node scripts/initDatabase.js
  */
 
-import { neon } from '@neondatabase/serverless';
 import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import dotenv from 'dotenv';
+import pkg from 'pg';
+const { Pool } = pkg;
 
 // Load environment variables
 dotenv.config({ path: '.env' });
@@ -31,8 +32,10 @@ console.log('🚀 Starting database initialization...\n');
 
 async function initializeDatabase() {
   try {
-    // Create SQL client
-    const sql = neon(DATABASE_URL);
+    const pool = new Pool({
+      connectionString: DATABASE_URL,
+      ssl: { rejectUnauthorized: false },
+    });
 
     // Read schema file
     const schemaPath = join(__dirname, '..', 'db', 'schema.sql');
@@ -43,7 +46,7 @@ async function initializeDatabase() {
 
     // Execute the entire schema using unsafe SQL
     // This is safe for initialization scripts where we control the SQL content
-    const result = await sql.unsafe(schemaSQL);
+    await pool.query(schemaSQL);
 
     console.log('✅ Database schema created successfully!');
     console.log('✅ Initial categories inserted');
@@ -61,7 +64,7 @@ async function initializeDatabase() {
 
     console.error('\nPlease check:');
     console.error('1. Your DATABASE_URL is correct');
-    console.error('2. Your database is accessible');
+    console.error('2. Your database is accessible (check VPN/DNS)');
     console.error('3. You have the necessary permissions');
 
     process.exit(1);

@@ -1,8 +1,13 @@
 import { GoogleGenAI, Type } from "@google/genai";
 
 // Initialize Gemini API
-// IMPORTANT: process.env.API_KEY must be available in the environment.
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Prefer public env for client bundle; fall back to server-side key if explicitly exposed.
+const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+if (!apiKey) {
+  throw new Error("Gemini API anahtarı bulunamadı. .env.local içinde NEXT_PUBLIC_GEMINI_API_KEY veya GEMINI_API_KEY tanımlayın.");
+}
+
+const ai = new GoogleGenAI({ apiKey });
 
 export interface ReceiptData {
   amount: number;

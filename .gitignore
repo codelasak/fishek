@@ -24,3 +24,7 @@ dist-ssr
 *.sw?
 .env
 .env.local
+.next
+
+# Drizzle
+drizzle/

@@ -1,30 +1,31 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { getTransactionById, getCategories, deleteTransaction } from '../services/databaseService';
-import { TransactionType, Transaction, Category } from '../types';
+'use client';
 
-const TransactionDetail: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { transactionsApi, categoriesApi } from '@/services/apiClient';
+import { TransactionType, Transaction, Category } from '@/types';
+
+export default function TransactionDetail({ params }: { params: { id: string } }) {
+  const router = useRouter();
   const [transaction, setTransaction] = useState<Transaction | null>(null);
   const [category, setCategory] = useState<Category | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadData = async () => {
-      if (!id) {
-        navigate('/');
+      if (!params.id) {
+        router.push('/');
         return;
       }
 
       try {
         const [transactionData, categoriesData] = await Promise.all([
-          getTransactionById(id),
-          getCategories()
+          transactionsApi.getById(params.id),
+          categoriesApi.getAll()
         ]);
 
         if (!transactionData) {
-          navigate('/');
+          router.push('/');
           return;
         }
 
@@ -39,15 +40,15 @@ const TransactionDetail: React.FC = () => {
     };
 
     loadData();
-  }, [id, navigate]);
+  }, [params.id, router]);
 
   const handleDelete = async () => {
     if (!transaction) return;
 
     if (confirm('Bu işlemi silmek istediğinize emin misiniz?')) {
       try {
-        await deleteTransaction(transaction.id);
-        navigate('/');
+        await transactionsApi.delete(transaction.id);
+        router.push('/');
       } catch (error) {
         console.error('Error deleting transaction:', error);
         alert('İşlem silinemedi. Lütfen tekrar deneyin.');
@@ -72,7 +73,7 @@ const TransactionDetail: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col bg-background-light dark:bg-background-dark">
       <header className="flex items-center justify-between p-4 sticky top-0 bg-background-light/90 dark:bg-background-dark/90 backdrop-blur z-10">
-        <button onClick={() => navigate(-1)} className="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10">
+        <button onClick={() => router.back()} className="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10">
           <span className="material-symbols-outlined">arrow_back</span>
         </button>
         <h1 className="text-lg font-bold">İşlem Detayı</h1>
@@ -117,12 +118,10 @@ const TransactionDetail: React.FC = () => {
       </div>
 
       <div className="p-4 bg-background-light dark:bg-background-dark border-t border-gray-200 dark:border-gray-800">
-           <button onClick={() => navigate(-1)} className="w-full h-14 bg-primary text-[#102216] rounded-xl font-bold text-lg">
+           <button onClick={() => router.back()} className="w-full h-14 bg-primary text-[#102216] rounded-xl font-bold text-lg">
                Tamam
            </button>
       </div>
     </div>
   );
-};
-
-export default TransactionDetail;
+}

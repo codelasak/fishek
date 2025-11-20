@@ -1,20 +1,25 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Project Overview
 
-# Run and deploy your AI Studio app
-
-This contains everything you need to run your app locally.
-
-View your app in AI Studio: https://ai.studio/apps/drive/1HmHsORlLo7OF1-sr-5XduzfYKErBkwed
+**Fishek** is a Turkish-language personal finance tracking mobile web app built with React, TypeScript, and Vite. The app features AI-powered receipt scanning using Google Gemini API for automatic transaction entry.
 
 ## Run Locally
 
-**Prerequisites:**  Node.js
+**Prerequisites:** Node.js
 
-
-1. Install dependencies:
+1) Install dependencies  
    `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
+2) Set environment variables (in `.env` or `.env.local`):  
+   - `AUTH_SECRET`  
+   - `DATABASE_URL`  
+   - `GEMINI_API_KEY` and `NEXT_PUBLIC_GEMINI_API_KEY`
+3) Initialize the database (creates tables, seeds demo user + sample data)  
+   `npm run db:init`
+4) Run the app (localhost:3000)  
    `npm run dev`
+5) Production build  
+   `npm run build`
+
+
+## Project Credits
+
+This project is developed by Eshagh Shahnavazi with FebLabs.

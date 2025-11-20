@@ -5,6 +5,7 @@ export enum TransactionType {
 
 export interface Category {
   id: string;
+  userId?: string;
   name: string;
   icon: string;
   type: TransactionType;
@@ -15,6 +16,7 @@ export interface Category {
 
 export interface Transaction {
   id: string;
+  userId?: string;
   amount: number;
   description: string; // Merchant or Description
   date: string; // ISO Date string YYYY-MM-DD
