@@ -34,14 +34,20 @@ const LoginContent: React.FC = () => {
       callbackUrl: '/',
     });
 
+    console.log('[Login] signIn result:', result);
     setLoading(false);
 
     if (result?.error) {
+      console.log('[Login] Error:', result.error);
       setError('E-posta veya şifre hatalı.');
       return;
     }
 
-    router.push('/');
+    if (result?.ok) {
+      console.log('[Login] Success, redirecting...');
+      router.push('/');
+      router.refresh();
+    }
   };
 
   return (
