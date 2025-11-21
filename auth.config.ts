@@ -12,8 +12,15 @@ const credentialsSchema = z.object({
   password: z.string().min(6),
 });
 
+const authSecret = process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET;
+
+if (!authSecret) {
+  throw new Error('AUTH_SECRET or NEXTAUTH_SECRET must be defined for authentication to work.');
+}
+
 const authConfig: NextAuthConfig = {
   adapter: DrizzleAdapter(db),
+  secret: authSecret,
   session: {
     strategy: 'jwt',
   },

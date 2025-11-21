@@ -1,28 +1,22 @@
 import { NextResponse } from 'next/server';
-import { getToken } from 'next-auth/jwt';
+import { auth } from '@/auth';
 
 const publicPaths = ['/login', '/register'];
 
-export async function middleware(req: Request) {
-  const request = req as any;
-  const url = request.nextUrl;
-  const isPublic = publicPaths.includes(url.pathname);
+export default auth((req) => {
+  const isPublic = publicPaths.includes(req.nextUrl.pathname);
+  const isLoggedIn = Boolean(req.auth);
 
-  const token = await getToken({
-    req: request,
-    secret: process.env.AUTH_SECRET,
-  });
-
-  if (!token && !isPublic) {
-    return NextResponse.redirect(new URL('/login', url));
+  if (!isLoggedIn && !isPublic) {
+    return NextResponse.redirect(new URL('/login', req.nextUrl));
   }
 
-  if (token && isPublic) {
-    return NextResponse.redirect(new URL('/', url));
+  if (isLoggedIn && isPublic) {
+    return NextResponse.redirect(new URL('/', req.nextUrl));
   }
 
   return NextResponse.next();
-}
+});
 
 export const config = {
   matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
