@@ -36,8 +36,11 @@ class MobileAuthService {
   async login(email: string, password: string): Promise<{ user?: AuthUser; error?: string }> {
     try {
       const apiBase = process.env.NEXT_PUBLIC_API_URL || '';
+      const url = `${apiBase}/api/auth/mobile`;
       
-      const response = await fetch(`${apiBase}/api/auth/mobile`, {
+      console.log('[MobileAuth] Attempting login to:', url);
+      
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -48,9 +51,17 @@ class MobileAuthService {
         }),
       });
 
+      console.log('[MobileAuth] Response status:', response.status);
+
       if (!response.ok) {
-        const error = await response.json().catch(() => ({ error: 'Login failed' }));
-        return { error: error.error || 'Login failed' };
+        const errorText = await response.text();
+        console.error('[MobileAuth] Error response:', errorText);
+        try {
+          const errorJson = JSON.parse(errorText);
+          return { error: errorJson.error || 'Login failed' };
+        } catch {
+          return { error: `Login failed: ${response.status}` };
+        }
       }
 
       const data: AuthTokens = await response.json();
@@ -59,10 +70,11 @@ class MobileAuthService {
       await Preferences.set({ key: TOKEN_KEY, value: data.accessToken });
       await Preferences.set({ key: USER_KEY, value: JSON.stringify(data.user) });
       
+      console.log('[MobileAuth] Login successful');
       return { user: data.user };
     } catch (error) {
       console.error('[MobileAuth] Login error:', error);
-      return { error: 'Network error' };
+      return { error: `Network error: ${error instanceof Error ? error.message : 'Unknown'}` };
     }
   }
 

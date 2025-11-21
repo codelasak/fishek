@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useSession, signOut } from 'next-auth/react';
+import { signOut } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import { transactionsApi, categoriesApi, statsApi } from '../services/apiClient';
 import { Transaction, Category, TransactionType } from '../types';
 import TransactionCard from '../components/TransactionCard';
@@ -11,9 +12,12 @@ import { useFamily } from '@/lib/FamilyContext';
 import { FamilyModeToggle } from '@/components/FamilyModeToggle';
 import Onboarding from '@/components/Onboarding';
 import { onboardingStorage } from '@/lib/onboardingStorage';
+import { useMobileAuth } from '@/lib/MobileAuthContext';
 
 export default function Dashboard() {
-  const { data: session, status } = useSession();
+  const router = useRouter();
+  const { user, loading: authLoading, isAuthenticated, isMobile, logout: mobileLogout } = useMobileAuth();
+  const status = authLoading ? 'loading' : isAuthenticated ? 'authenticated' : 'unauthenticated';
   const { mode, activeFamily } = useFamily();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -24,6 +28,13 @@ export default function Dashboard() {
   const [language, setLanguage] = useState<'TR' | 'EN'>('TR');
   const [currency, setCurrency] = useState<'TRY' | 'USD'>('TRY');
   const [showOnboarding, setShowOnboarding] = useState(false);
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      router.push('/login');
+    }
+  }, [authLoading, isAuthenticated, router]);
 
   // Check onboarding status
   useEffect(() => {
@@ -148,10 +159,6 @@ export default function Dashboard() {
     );
   }
 
-  if (status === 'unauthenticated') {
-    return null;
-  }
-
   return (
     <>
       <div className="pb-nav-safe pt-safe">
@@ -229,7 +236,14 @@ export default function Dashboard() {
                   </div>
 
                   <button
-                    onClick={() => signOut({ callbackUrl: '/login' })}
+                    onClick={async () => {
+                      if (isMobile) {
+                        await mobileLogout();
+                        window.location.href = '/login';
+                      } else {
+                        signOut({ callbackUrl: '/login' });
+                      }
+                    }}
                     className="w-full h-11 rounded-xl bg-gray-900 text-white dark:bg-white dark:text-gray-900 font-semibold flex items-center gap-2 justify-center hover:opacity-90 transition"
                   >
                     <span className="material-symbols-outlined text-base">logout</span>
@@ -244,7 +258,7 @@ export default function Dashboard() {
         {/* Greeting */}
         <div className="px-4 pt-2 pb-6">
           <h1 className="text-3xl font-bold">
-            Merhaba{session?.user?.name ? `, ${session.user.name}` : ''}!
+            Merhaba{user?.name ? `, ${user.name}` : ''}!
           </h1>
           {mode === 'family' && activeFamily && (
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 flex items-center gap-1">

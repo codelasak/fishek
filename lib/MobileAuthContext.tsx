@@ -8,7 +8,6 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { useSession } from 'next-auth/react';
 import { mobileAuth, AuthUser } from './mobileAuth';
 
 interface MobileAuthContextType {
@@ -24,12 +23,11 @@ interface MobileAuthContextType {
 const MobileAuthContext = createContext<MobileAuthContextType | undefined>(undefined);
 
 export function MobileAuthProvider({ children }: { children: ReactNode }) {
-  const { data: session, status } = useSession();
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
 
-  // Check if running in Capacitor
+  // Check if running in Capacitor and load user
   useEffect(() => {
     const checkMobile = () => {
       const mobile = typeof window !== 'undefined' && 
@@ -40,44 +38,39 @@ export function MobileAuthProvider({ children }: { children: ReactNode }) {
 
     const mobile = checkMobile();
 
-    // Load user from storage if mobile
+    // Load user from storage (mobile or web)
     if (mobile) {
       mobileAuth.getUser().then((storedUser) => {
         setUser(storedUser);
         setLoading(false);
       });
     } else {
-      // Web: use NextAuth session
-      if (status !== 'loading') {
-        if (session?.user) {
-          setUser({
-            id: session.user.id as string,
-            email: session.user.email as string,
-            name: session.user.name as string,
-          });
-        }
+      // For web, we'll import and use NextAuth dynamically
+      import('next-auth/react').then(({ useSession: _useSession }) => {
+        // Web authentication still uses NextAuth
+        // This will be handled by the SessionProvider wrapper
         setLoading(false);
-      }
+      });
     }
-  }, [session, status]);
+  }, []);
 
   const login = async (email: string, password: string) => {
-    try {
-      const user = await mobileAuth.login(email, password);
-      setUser(user);
-    } catch (error) {
-      console.error('Login failed:', error);
-      throw error;
+    const result = await mobileAuth.login(email, password);
+    if (result.error) {
+      throw new Error(result.error);
+    }
+    if (result.user) {
+      setUser(result.user);
     }
   };
 
   const register = async (email: string, password: string, name: string) => {
-    try {
-      const user = await mobileAuth.register(email, password, name);
-      setUser(user);
-    } catch (error) {
-      console.error('Registration failed:', error);
-      throw error;
+    const result = await mobileAuth.register(name, email, password);
+    if (result.error) {
+      throw new Error(result.error);
+    }
+    if (result.user) {
+      setUser(result.user);
     }
   };
 
