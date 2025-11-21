@@ -9,8 +9,10 @@ import ConfirmDialog from '@/components/ConfirmDialog';
 import SwipeableCard from '@/components/SwipeableCard';
 import EmptyState from '@/components/EmptyState';
 import Toast from '@/components/Toast';
+import { useFamily } from '@/lib/FamilyContext';
 
 export default function Categories() {
+  const { mode, activeFamily } = useFamily();
   const [categories, setCategories] = useState<Category[]>([]);
   const [activeTab, setActiveTab] = useState<TransactionType>(TransactionType.EXPENSE);
   const [loading, setLoading] = useState(true);
@@ -39,7 +41,18 @@ export default function Categories() {
 
   const loadCategories = async () => {
     try {
-      const categoriesData = await categoriesApi.getAll();
+      let categoriesData;
+      
+      if (mode === 'family' && activeFamily) {
+        // Load family categories
+        const response = await fetch(`/api/family-categories?familyId=${activeFamily.id}`);
+        const data = await response.json();
+        categoriesData = data.categories || [];
+      } else {
+        // Load personal categories
+        categoriesData = await categoriesApi.getAll();
+      }
+      
       setCategories(categoriesData);
     } catch (error) {
       console.error('Error loading categories:', error);
@@ -50,7 +63,7 @@ export default function Categories() {
 
   useEffect(() => {
     loadCategories();
-  }, []);
+  }, [mode, activeFamily]);
 
   const filteredCategories = categories
     .filter(c => c.type === activeTab)
@@ -92,32 +105,70 @@ export default function Categories() {
     const budgetNum = newBudget ? parseFloat(newBudget) : undefined;
 
     try {
-      if (editingCategory) {
-        // Optimistic update for edit
-        const updatedCategory = {
-          ...editingCategory,
-          name: newName.trim(),
-          icon: newIcon,
-          budgetLimit: budgetNum,
-          color: newColor,
-        };
-
-        setCategories(prev =>
-          prev.map(c => c.id === editingCategory.id ? updatedCategory : c)
-        );
-
-        await categoriesApi.update(updatedCategory);
-        setToast({ open: true, message: 'Kategori güncellendi', type: 'success' });
+      if (mode === 'family' && activeFamily) {
+        // Family mode operations
+        if (editingCategory) {
+          // Update family category
+          const response = await fetch('/api/family-categories', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              id: editingCategory.id,
+              familyId: activeFamily.id,
+              name: newName.trim(),
+              icon: newIcon,
+              budgetLimit: budgetNum,
+              color: newColor,
+            }),
+          });
+          if (!response.ok) throw new Error('Failed to update category');
+          setToast({ open: true, message: 'Kategori güncellendi', type: 'success' });
+        } else {
+          // Create family category
+          const response = await fetch('/api/family-categories', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              familyId: activeFamily.id,
+              name: newName.trim(),
+              icon: newIcon,
+              type: activeTab,
+              budgetLimit: budgetNum,
+              color: newColor,
+            }),
+          });
+          if (!response.ok) throw new Error('Failed to create category');
+          setToast({ open: true, message: 'Kategori oluşturuldu', type: 'success' });
+        }
       } else {
-        // Create new category
-        await categoriesApi.create({
-          name: newName.trim(),
-          icon: newIcon,
-          type: activeTab,
-          budgetLimit: budgetNum,
-          color: newColor,
-        });
-        setToast({ open: true, message: 'Kategori oluşturuldu', type: 'success' });
+        // Personal mode operations
+        if (editingCategory) {
+          // Optimistic update for edit
+          const updatedCategory = {
+            ...editingCategory,
+            name: newName.trim(),
+            icon: newIcon,
+            budgetLimit: budgetNum,
+            color: newColor,
+          };
+
+          setCategories(prev =>
+            prev.map(c => c.id === editingCategory.id ? updatedCategory : c)
+          );
+
+          await categoriesApi.update(updatedCategory);
+          setToast({ open: true, message: 'Kategori güncellendi', type: 'success' });
+        } else {
+          // Create new category
+          await categoriesApi.create({
+            name: newName.trim(),
+            icon: newIcon,
+            type: activeTab,
+            budgetLimit: budgetNum,
+            color: newColor,
+          });
+          setToast({ open: true, message: 'Kategori oluşturuldu', type: 'success' });
+        }
       }
 
       setNewName('');
@@ -158,7 +209,16 @@ export default function Categories() {
 
     setDeleting(true);
     try {
-      await categoriesApi.delete(deleteConfirm.category.id);
+      if (mode === 'family' && activeFamily) {
+        // Delete family category
+        const response = await fetch(`/api/family-categories?id=${deleteConfirm.category.id}&familyId=${activeFamily.id}`, {
+          method: 'DELETE',
+        });
+        if (!response.ok) throw new Error('Failed to delete category');
+      } else {
+        // Delete personal category
+        await categoriesApi.delete(deleteConfirm.category.id);
+      }
       await loadCategories();
       setDeleteConfirm({ open: false, category: null });
       setToast({ open: true, message: 'Kategori silindi', type: 'success' });
@@ -172,13 +232,31 @@ export default function Categories() {
 
   const handleQuickAdd = async (name: string, icon: string) => {
     try {
-      await categoriesApi.create({
-        name,
-        icon,
-        type: activeTab,
-        budgetLimit: undefined,
-        color: undefined,
-      });
+      if (mode === 'family' && activeFamily) {
+        // Create family category
+        const response = await fetch('/api/family-categories', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            familyId: activeFamily.id,
+            name,
+            icon,
+            type: activeTab,
+            budgetLimit: undefined,
+            color: undefined,
+          }),
+        });
+        if (!response.ok) throw new Error('Failed to create category');
+      } else {
+        // Create personal category
+        await categoriesApi.create({
+          name,
+          icon,
+          type: activeTab,
+          budgetLimit: undefined,
+          color: undefined,
+        });
+      }
       await loadCategories();
       setToast({ open: true, message: `${name} kategorisi eklendi`, type: 'success' });
     } catch (err) {
@@ -191,9 +269,21 @@ export default function Categories() {
     setDeleting(true);
     const count = selectedIds.size;
     try {
-      await Promise.all(
-        Array.from(selectedIds).map(id => categoriesApi.delete(id))
-      );
+      if (mode === 'family' && activeFamily) {
+        // Delete family categories
+        await Promise.all(
+          Array.from(selectedIds).map(id =>
+            fetch(`/api/family-categories?id=${id}&familyId=${activeFamily.id}`, {
+              method: 'DELETE',
+            })
+          )
+        );
+      } else {
+        // Delete personal categories
+        await Promise.all(
+          Array.from(selectedIds).map(id => categoriesApi.delete(id))
+        );
+      }
       await loadCategories();
       setSelectedIds(new Set());
       setBulkMode(false);
