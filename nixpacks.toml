@@ -1,17 +1,11 @@
 [variables]
 NIXPACKS_NODE_VERSION = "22"
 
-[phases.setup]
-cmds = [
-  "corepack enable",
-  "corepack prepare pnpm@9.15.9 --activate"
-]
-
 [phases.install]
-cmds = ["pnpm install --no-frozen-lockfile"]
+cmds = ["npm install"]
 
 [phases.build]
-cmds = ["pnpm run build"]
+cmds = ["npm run build"]
 
 [start]
-cmd = "pnpm run start"
+cmd = "npm run start"
