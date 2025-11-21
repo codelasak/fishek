@@ -4,9 +4,12 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
 import { signIn } from 'next-auth/react';
+import { Capacitor } from '@capacitor/core';
+import { mobileAuth } from '@/lib/mobileAuth';
 
 const RegisterPage: React.FC = () => {
   const router = useRouter();
+  const isMobile = Capacitor.isNativePlatform();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -19,29 +22,49 @@ const RegisterPage: React.FC = () => {
     setError(null);
     setLoading(true);
 
-    const res = await fetch('/api/auth/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, email, password }),
-    });
+    try {
+      if (isMobile) {
+        // Mobile registration
+        const result = await mobileAuth.register(name, email, password);
+        if (result.error) {
+          setError(result.error);
+          setLoading(false);
+          return;
+        }
+        console.log('[Mobile Register] Success');
+        router.push('/');
+        router.refresh();
+      } else {
+        // Web registration
+        const res = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, password }),
+        });
 
-    setLoading(false);
+        setLoading(false);
 
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
-      setError(data?.error || 'Kayıt işlemi başarısız oldu.');
-      return;
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          setError(data?.error || 'Kayıt işlemi başarısız oldu.');
+          return;
+        }
+
+        // Auto sign-in after successful registration
+        await signIn('credentials', {
+          email,
+          password,
+          redirect: false,
+          callbackUrl: '/',
+        });
+
+        router.push('/');
+      }
+    } catch (err) {
+      console.error('[Register] Exception:', err);
+      setError('Bir hata oluştu. Lütfen tekrar deneyin.');
+      setLoading(false);
     }
-
-    // Auto sign-in after successful registration
-    await signIn('credentials', {
-      email,
-      password,
-      redirect: false,
-      callbackUrl: '/',
-    });
-
-    router.push('/');
   };
 
   return (

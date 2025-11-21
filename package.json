@@ -6,15 +6,24 @@
   "scripts": {
     "dev": "next dev -p 3000",
     "build": "next build",
+    "build:mobile": "node scripts/buildMobile.js",
     "start": "next start",
     "lint": "next lint",
-    "db:init": "node scripts/initDatabase.js"
+    "db:init": "node scripts/initDatabase.js",
+    "cap:sync": "npx cap sync",
+    "cap:open:ios": "npx cap open ios",
+    "cap:run:ios": "npx cap run ios",
+    "cap:add:ios": "npx cap add ios"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.11.1",
+    "@capacitor/core": "^7.4.4",
+    "@capacitor/ios": "^7.4.4",
+    "@capacitor/preferences": "^7.0.2",
     "@google/genai": "^1.30.0",
     "@neondatabase/serverless": "^1.0.2",
     "drizzle-orm": "^0.44.7",
+    "jose": "^6.1.2",
     "next": "^16.0.3",
     "next-auth": "5.0.0-beta.30",
     "pg": "^8.13.1",
@@ -23,6 +32,7 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@capacitor/cli": "^7.4.4",
     "@tailwindcss/container-queries": "^0.1.1",
     "@tailwindcss/forms": "^0.5.9",
     "@types/node": "^22.14.0",

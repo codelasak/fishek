@@ -4,10 +4,13 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import React, { useEffect, useState, Suspense } from 'react';
 import { signIn } from 'next-auth/react';
+import { Capacitor } from '@capacitor/core';
+import { mobileAuth } from '@/lib/mobileAuth';
 
 const LoginContent: React.FC = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const isMobile = Capacitor.isNativePlatform();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -27,26 +30,46 @@ const LoginContent: React.FC = () => {
     setError(null);
     setLoading(true);
 
-    const result = await signIn('credentials', {
-      email,
-      password,
-      redirect: false,
-      callbackUrl: '/',
-    });
+    try {
+      if (isMobile) {
+        // Mobile login with JWT
+        const result = await mobileAuth.login(email, password);
+        if (result.error) {
+          setError(result.error);
+          setLoading(false);
+          return;
+        }
+        console.log('[Mobile Login] Success');
+        router.push('/');
+        router.refresh();
+      } else {
+        // Web login with NextAuth
+        const result = await signIn('credentials', {
+          email,
+          password,
+          redirect: false,
+          callbackUrl: '/',
+        });
 
-    console.log('[Login] signIn result:', result);
-    setLoading(false);
+        console.log('[Login] signIn result:', result);
+        setLoading(false);
 
-    if (result?.error) {
-      console.log('[Login] Error:', result.error);
-      setError('E-posta veya şifre hatalı.');
-      return;
-    }
+        if (result?.error) {
+          console.log('[Login] Error:', result.error);
+          setError('E-posta veya şifre hatalı.');
+          return;
+        }
 
-    if (result?.ok) {
-      console.log('[Login] Success, redirecting...');
-      router.push('/');
-      router.refresh();
+        if (result?.ok) {
+          console.log('[Login] Success, redirecting...');
+          router.push('/');
+          router.refresh();
+        }
+      }
+    } catch (err) {
+      console.error('[Login] Exception:', err);
+      setError('Bir hata oluştu. Lütfen tekrar deneyin.');
+      setLoading(false);
     }
   };
 
