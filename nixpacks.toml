@@ -6,6 +6,7 @@ cmds = ["npm install"]
 
 [phases.build]
 cmds = ["npm run build"]
+cacheDirectories = [".next/cache", "node_modules/.cache"]
 
 [start]
 cmd = "npm run start"
