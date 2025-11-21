@@ -139,7 +139,7 @@ export default function Dashboard() {
 
   return (
     <>
-      <div className="pb-24 pt-safe">
+      <div className="pb-nav-safe pt-safe">
         {/* Header */}
         <div className="flex items-center p-4 gap-3">
           <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-primary/10">

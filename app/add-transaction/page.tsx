@@ -215,7 +215,7 @@ export default function AddTransaction() {
         )}
       </div>
 
-      <div className="flex-1 px-4 pb-24 overflow-y-auto space-y-5">
+      <div className="flex-1 px-4 pb-nav-safe overflow-y-auto space-y-5">
         {scanError && (
           <div className="p-3 rounded-lg bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-200 text-sm border border-red-200 dark:border-red-800">
             {scanError}
@@ -352,7 +352,7 @@ export default function AddTransaction() {
       </div>
 
       {/* Bottom Button */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-background-light dark:bg-background-dark border-t border-gray-200 dark:border-gray-800 z-20">
+      <div className="fixed bottom-0 left-0 right-0 p-4 pb-safe bg-background-light dark:bg-background-dark border-t border-gray-200 dark:border-gray-800 z-20">
         <button
           onClick={handleSave}
           disabled={!amount || isScanning}

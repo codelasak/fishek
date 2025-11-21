@@ -82,7 +82,7 @@ export default function TransactionDetail({ params }: { params: { id: string } }
         </button>
       </header>
 
-      <div className="flex-1 p-4 overflow-y-auto pb-24">
+      <div className="flex-1 p-4 overflow-y-auto pb-nav-safe">
         <div className="text-center py-8">
              <h2 className={`text-4xl font-bold tracking-tight ${isIncome ? 'text-primary' : 'text-red-500'}`}>
                 {isIncome ? '+' : '-'}₺{transaction.amount.toFixed(2)}

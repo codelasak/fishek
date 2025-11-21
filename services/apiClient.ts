@@ -50,6 +50,22 @@ export const categoriesApi = {
     if (!res.ok) throw new Error('Failed to create category');
     return res.json();
   },
+
+  update: async (category: Category): Promise<void> => {
+    const res = await fetch(`${API_BASE}/categories/${category.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(category),
+    });
+    if (!res.ok) throw new Error('Failed to update category');
+  },
+
+  delete: async (id: string): Promise<void> => {
+    const res = await fetch(`${API_BASE}/categories/${id}`, {
+      method: 'DELETE',
+    });
+    if (!res.ok) throw new Error('Failed to delete category');
+  },
 };
 
 // Stats API

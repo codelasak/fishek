@@ -41,3 +41,21 @@ body {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* Safe areas for mobile navigation */
+.pb-nav-safe {
+  padding-bottom: 96px; /* 80px nav + 16px spacing */
+}
+
+.mb-nav-safe {
+  margin-bottom: 96px; /* 80px nav + 16px spacing */
+}
+
+.bottom-nav-safe {
+  bottom: 96px; /* Position above nav bar */
+}
+
+/* For fixed bottom elements that need to be above the nav */
+.fixed-bottom-safe {
+  padding-bottom: 80px; /* Height of bottom nav */
+}
