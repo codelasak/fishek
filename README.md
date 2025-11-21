@@ -22,7 +22,7 @@
 
 
 ## Deployment (Coolify/Nixpacks)
-- A `nixpacks.toml` is included to force a Node/Next.js build (`pnpm install`, `pnpm run build`, `pnpm run start`).  
+- A `nixpacks.toml` is included to force a Node/Next.js build (`pnpm install --no-frozen-lockfile`, `pnpm run build`, `pnpm run start`).  
 - Ensure the same env vars from `.env.local` are configured in the platform.
 
 ## Project Credits
