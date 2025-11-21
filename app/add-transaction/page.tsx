@@ -5,11 +5,13 @@ import { useRouter } from 'next/navigation';
 import { categoriesApi, transactionsApi } from '@/services/apiClient';
 import { scanReceipt } from '@/services/geminiService';
 import { TransactionType, Category } from '@/types';
+import { useFamily } from '@/lib/FamilyContext';
 
 const quickAmounts = [50, 100, 250, 500];
 
 export default function AddTransaction() {
   const router = useRouter();
+  const { mode, activeFamily } = useFamily();
   const [categories, setCategories] = useState<Category[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -27,7 +29,18 @@ export default function AddTransaction() {
   useEffect(() => {
     const loadCategories = async () => {
       try {
-        const categoriesData = await categoriesApi.getAll();
+        let categoriesData;
+
+        if (mode === 'family' && activeFamily) {
+          // Load family categories
+          const response = await fetch(`/api/family-categories?familyId=${activeFamily.id}`);
+          const data = await response.json();
+          categoriesData = data.categories || [];
+        } else {
+          // Load personal categories
+          categoriesData = await categoriesApi.getAll();
+        }
+
         setCategories(categoriesData);
         if (categoriesData.length > 0) {
           const defaultCategory = categoriesData.find(c => c.type === TransactionType.EXPENSE) || categoriesData[0];
@@ -41,7 +54,7 @@ export default function AddTransaction() {
     };
 
     loadCategories();
-  }, []);
+  }, [mode, activeFamily]);
 
   // Keep category selection valid when type changes
   useEffect(() => {
@@ -114,16 +127,38 @@ export default function AddTransaction() {
     }
 
     try {
-      await transactionsApi.create({
-        id: crypto.randomUUID(),
-        amount: parseFloat(amount),
-        description: description || (type === TransactionType.INCOME ? 'Gelir' : 'Gider'),
-        date,
-        categoryId,
-        type,
-        receiptImage: receiptImage || undefined,
-        createdAt: Date.now()
-      });
+      if (mode === 'family' && activeFamily) {
+        // Save to family transactions
+        const response = await fetch('/api/family-transactions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            familyId: activeFamily.id,
+            amount: parseFloat(amount),
+            description: description || (type === TransactionType.INCOME ? 'Gelir' : 'Gider'),
+            date,
+            categoryId,
+            type,
+            receiptImage: receiptImage || null,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to create family transaction');
+        }
+      } else {
+        // Save to personal transactions
+        await transactionsApi.create({
+          id: crypto.randomUUID(),
+          amount: parseFloat(amount),
+          description: description || (type === TransactionType.INCOME ? 'Gelir' : 'Gider'),
+          date,
+          categoryId,
+          type,
+          receiptImage: receiptImage || undefined,
+          createdAt: Date.now()
+        });
+      }
 
       router.push('/');
     } catch (error) {
@@ -143,28 +178,41 @@ export default function AddTransaction() {
   return (
     <div className="flex flex-col min-h-screen bg-background-light dark:bg-background-dark">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 sticky top-0 bg-background-light/95 dark:bg-background-dark/95 backdrop-blur z-10">
-        <button onClick={() => router.back()} className="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10">
-          <span className="material-symbols-outlined">arrow_back</span>
-        </button>
-        <h1 className="text-lg font-bold">Yeni İşlem Ekle</h1>
-        <button
-          onClick={() => fileInputRef.current?.click()}
-          className={`p-2 -mr-2 rounded-full ${isScanning ? 'animate-pulse text-primary' : 'hover:bg-black/5 dark:hover:bg-white/10'}`}
-          disabled={isScanning}
-        >
-          <span className="material-symbols-outlined">
-            {isScanning ? 'hourglass_top' : 'photo_camera'}
-          </span>
-        </button>
-        <input
-          type="file"
-          ref={fileInputRef}
-          className="hidden"
-          accept="image/*"
-          capture="environment"
-          onChange={handleFileChange}
-        />
+      <div className="sticky top-0 bg-background-light/95 dark:bg-background-dark/95 backdrop-blur z-10">
+        <div className="flex items-center justify-between p-4">
+          <button onClick={() => router.back()} className="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10">
+            <span className="material-symbols-outlined">arrow_back</span>
+          </button>
+          <h1 className="text-lg font-bold">Yeni İşlem Ekle</h1>
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className={`p-2 -mr-2 rounded-full ${isScanning ? 'animate-pulse text-primary' : 'hover:bg-black/5 dark:hover:bg-white/10'}`}
+            disabled={isScanning}
+          >
+            <span className="material-symbols-outlined">
+              {isScanning ? 'hourglass_top' : 'photo_camera'}
+            </span>
+          </button>
+          <input
+            type="file"
+            ref={fileInputRef}
+            className="hidden"
+            accept="image/*"
+            capture="environment"
+            onChange={handleFileChange}
+          />
+        </div>
+        {/* Mode Indicator */}
+        {mode === 'family' && activeFamily && (
+          <div className="px-4 pb-3">
+            <div className="flex items-center gap-2 px-3 py-2 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+              <span className="material-symbols-outlined text-green-600 text-lg">groups</span>
+              <span className="text-sm text-green-800 dark:text-green-200">
+                <span className="font-semibold">{activeFamily.name}</span> ailesine kaydediliyor
+              </span>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="flex-1 px-4 pb-24 overflow-y-auto space-y-5">

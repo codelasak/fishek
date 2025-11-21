@@ -7,9 +7,12 @@ import { transactionsApi, categoriesApi, statsApi } from '../services/apiClient'
 import { Transaction, Category, TransactionType } from '../types';
 import TransactionCard from '../components/TransactionCard';
 import BottomNav from '../components/BottomNav';
+import { useFamily } from '@/lib/FamilyContext';
+import { FamilyModeToggle } from '@/components/FamilyModeToggle';
 
 export default function Dashboard() {
   const { data: session, status } = useSession();
+  const { mode, activeFamily } = useFamily();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [stats, setStats] = useState({ income: 0, expense: 0, balance: 0, monthlyBudget: 0, monthlySpent: 0 });
@@ -27,20 +30,52 @@ export default function Dashboard() {
     const loadData = async () => {
       try {
         setLoading(true);
-        const [transactionsData, categoriesData, dashboardStats] = await Promise.all([
-          transactionsApi.getAll(),
-          categoriesApi.getAll(),
-          statsApi.getDashboard()
-        ]);
-        setTransactions(transactionsData);
-        setCategories(categoriesData);
-        setStats({
-          income: dashboardStats.totalIncome,
-          expense: dashboardStats.totalExpense,
-          balance: dashboardStats.balance,
-          monthlyBudget: dashboardStats.monthlyBudget,
-          monthlySpent: dashboardStats.monthlySpent
-        });
+
+        if (mode === 'family' && activeFamily) {
+          // Load family data
+          const [transactionsRes, categoriesRes] = await Promise.all([
+            fetch(`/api/family-transactions?familyId=${activeFamily.id}`),
+            fetch(`/api/family-categories?familyId=${activeFamily.id}`)
+          ]);
+
+          const transactionsData = await transactionsRes.json();
+          const categoriesData = await categoriesRes.json();
+
+          setTransactions(transactionsData.transactions || []);
+          setCategories(categoriesData.categories || []);
+
+          // Calculate family stats
+          const income = transactionsData.transactions
+            ?.filter((t: any) => t.type === 'INCOME')
+            .reduce((sum: number, t: any) => sum + parseFloat(t.amount), 0) || 0;
+          const expense = transactionsData.transactions
+            ?.filter((t: any) => t.type === 'EXPENSE')
+            .reduce((sum: number, t: any) => sum + parseFloat(t.amount), 0) || 0;
+
+          setStats({
+            income,
+            expense,
+            balance: income - expense,
+            monthlyBudget: 0, // TODO: Calculate from family categories budgets
+            monthlySpent: expense
+          });
+        } else {
+          // Load personal data (existing logic)
+          const [transactionsData, categoriesData, dashboardStats] = await Promise.all([
+            transactionsApi.getAll(),
+            categoriesApi.getAll(),
+            statsApi.getDashboard()
+          ]);
+          setTransactions(transactionsData);
+          setCategories(categoriesData);
+          setStats({
+            income: dashboardStats.totalIncome,
+            expense: dashboardStats.totalExpense,
+            balance: dashboardStats.balance,
+            monthlyBudget: dashboardStats.monthlyBudget,
+            monthlySpent: dashboardStats.monthlySpent
+          });
+        }
       } catch (error) {
         console.error('Error loading dashboard data:', error);
       } finally {
@@ -49,7 +84,7 @@ export default function Dashboard() {
     };
 
     loadData();
-  }, [status]);
+  }, [status, mode, activeFamily]);
 
   const formatCurrency = (amount: number) => {
     const currencyCode = currency === 'TRY' ? 'TRY' : 'USD';
@@ -106,11 +141,12 @@ export default function Dashboard() {
     <>
       <div className="pb-24 pt-safe">
         {/* Header */}
-        <div className="flex items-center p-4">
+        <div className="flex items-center p-4 gap-3">
           <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-primary/10">
             <span className="material-symbols-outlined text-3xl text-primary">receipt_long</span>
           </div>
-          <h2 className="text-lg font-bold flex-1 ml-3">Fishek</h2>
+          <h2 className="text-lg font-bold flex-1 ml-1">Fishek</h2>
+          <FamilyModeToggle />
           <div className="relative">
             <button
               onClick={() => setShowProfileMenu((p) => !p)}
@@ -191,9 +227,17 @@ export default function Dashboard() {
         </div>
 
         {/* Greeting */}
-        <h1 className="text-3xl font-bold px-4 pt-2 pb-6">
-          Merhaba{session?.user?.name ? `, ${session.user.name}` : ''}!
-        </h1>
+        <div className="px-4 pt-2 pb-6">
+          <h1 className="text-3xl font-bold">
+            Merhaba{session?.user?.name ? `, ${session.user.name}` : ''}!
+          </h1>
+          {mode === 'family' && activeFamily && (
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 flex items-center gap-1">
+              <span className="material-symbols-outlined text-base">groups</span>
+              {activeFamily.name} - Aile Modu
+            </p>
+          )}
+        </div>
 
         {/* Stats Cards */}
         <div className="flex gap-4 px-4 overflow-x-auto no-scrollbar pb-2">
