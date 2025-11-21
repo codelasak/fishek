@@ -29,30 +29,50 @@ const authConfig: NextAuthConfig = {
         password: { label: 'Şifre', type: 'password' },
       },
       async authorize(credentials) {
-        const parsed = credentialsSchema.safeParse(credentials);
-        if (!parsed.success) return null;
+        try {
+          const parsed = credentialsSchema.safeParse(credentials);
+          if (!parsed.success) {
+            console.log('[Auth] Validation failed:', parsed.error);
+            return null;
+          }
 
-        const email = parsed.data.email.toLowerCase();
-        const [user] = await db
-          .select()
-          .from(users)
-          .where(eq(users.email, email))
-          .limit(1);
+          const email = parsed.data.email.toLowerCase();
+          console.log('[Auth] Looking up user:', email);
 
-        if (!user || !user.password) {
+          const [user] = await db
+            .select()
+            .from(users)
+            .where(eq(users.email, email))
+            .limit(1);
+
+          if (!user) {
+            console.log('[Auth] User not found');
+            return null;
+          }
+
+          if (!user.password) {
+            console.log('[Auth] User has no password');
+            return null;
+          }
+
+          console.log('[Auth] Verifying password...');
+          const isValid = await verifyPassword(parsed.data.password, user.password);
+
+          if (!isValid) {
+            console.log('[Auth] Invalid password');
+            return null;
+          }
+
+          console.log('[Auth] Login successful for:', email);
+          return {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+          };
+        } catch (error) {
+          console.error('[Auth] Error during authorization:', error);
           return null;
         }
-
-        const isValid = await verifyPassword(parsed.data.password, user.password);
-        if (!isValid) {
-          return null;
-        }
-
-        return {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-        };
       },
     }),
   ],
