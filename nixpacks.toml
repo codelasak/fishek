@@ -1,9 +1,5 @@
 [variables]
-# Pin Node.js version used during builds
 NIXPACKS_NODE_VERSION = "22"
-
-[providers]
-providers = ["node"]
 
 [phases.install]
 cmds = ["pnpm install --frozen-lockfile"]
