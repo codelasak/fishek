@@ -1,9 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFamily } from '@/lib/FamilyContext';
 import { FamilyModeToggle } from '@/components/FamilyModeToggle';
+import FamilyOnboarding from '../../components/FamilyOnboarding';
+import { onboardingStorage } from '@/lib/onboardingStorage';
 
 export default function FamilySettingsPage() {
   const router = useRouter();
@@ -15,6 +17,8 @@ export default function FamilySettingsPage() {
   const [inviteCode, setInviteCode] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [showFamilyOnboarding, setShowFamilyOnboarding] = useState(false);
+  const [onboardingMode, setOnboardingMode] = useState<'create' | 'join'>('create');
 
   const handleCreateFamily = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,6 +43,12 @@ export default function FamilySettingsPage() {
         setNewFamilyName('');
         setIsCreating(false);
         await refreshFamilies();
+        
+        // Show onboarding if first time
+        if (!onboardingStorage.isFamilyCompleted()) {
+          setOnboardingMode('create');
+          setShowFamilyOnboarding(true);
+        }
       } else {
         const data = await response.json();
         setError(data.error || 'Aile oluşturulamadı');
@@ -70,6 +80,12 @@ export default function FamilySettingsPage() {
         setInviteCode('');
         setIsJoining(false);
         await refreshFamilies();
+        
+        // Show onboarding if first time
+        if (!onboardingStorage.isFamilyCompleted()) {
+          setOnboardingMode('join');
+          setShowFamilyOnboarding(true);
+        }
       } else {
         const data = await response.json();
         setError(data.error || 'Aileye katılınamadı');
@@ -342,6 +358,16 @@ export default function FamilySettingsPage() {
           )}
         </div>
       </div>
+      
+      {showFamilyOnboarding && (
+        <FamilyOnboarding 
+          mode={onboardingMode}
+          onComplete={() => {
+            onboardingStorage.setFamilyCompleted();
+            setShowFamilyOnboarding(false);
+          }}
+        />
+      )}
     </div>
   );
 }

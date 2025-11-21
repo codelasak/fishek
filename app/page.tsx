@@ -9,6 +9,8 @@ import TransactionCard from '../components/TransactionCard';
 import BottomNav from '../components/BottomNav';
 import { useFamily } from '@/lib/FamilyContext';
 import { FamilyModeToggle } from '@/components/FamilyModeToggle';
+import Onboarding from '@/components/Onboarding';
+import { onboardingStorage } from '@/lib/onboardingStorage';
 
 export default function Dashboard() {
   const { data: session, status } = useSession();
@@ -21,6 +23,19 @@ export default function Dashboard() {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [language, setLanguage] = useState<'TR' | 'EN'>('TR');
   const [currency, setCurrency] = useState<'TRY' | 'USD'>('TRY');
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  // Check onboarding status
+  useEffect(() => {
+    if (status === 'authenticated' && !onboardingStorage.isCompleted()) {
+      setShowOnboarding(true);
+    }
+  }, [status]);
+
+  const handleOnboardingComplete = () => {
+    onboardingStorage.setCompleted();
+    setShowOnboarding(false);
+  };
 
   useEffect(() => {
     if (status !== 'authenticated') {
@@ -328,6 +343,9 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+      
+      {showOnboarding && <Onboarding onComplete={handleOnboardingComplete} />}
+      
       <BottomNav />
     </>
   );
