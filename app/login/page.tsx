@@ -67,6 +67,7 @@ const LoginContent: React.FC = () => {
             <input
               type="email"
               required
+              autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="e-posta adresinizi girin"
@@ -79,6 +80,7 @@ const LoginContent: React.FC = () => {
               <input
                 type={showPassword ? 'text' : 'password'}
                 required
+                autoComplete="current-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="şifrenizi girin"

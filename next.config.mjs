@@ -6,6 +6,19 @@ const nextConfig = {
     GEMINI_API_KEY: process.env.GEMINI_API_KEY,
   },
   turbopack: {},
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          {
+            key: 'Permissions-Policy',
+            value: 'camera=*, microphone=*, geolocation=*, interest-cohort=()',
+          },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;
