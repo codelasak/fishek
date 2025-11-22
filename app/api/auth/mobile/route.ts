@@ -5,14 +5,30 @@
  * POST /api/auth/mobile
  */
 
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { signJWT } from '@/lib/jwt';
 import { db } from '@/db';
 import { users } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { verifyPassword } from '@/lib/password';
 
-export async function POST(request: Request) {
+const allowedOrigins = [
+  'capacitor://localhost',
+  'http://localhost',
+  'https://fishek.coolify.fennaver.tech',
+];
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+};
+
+export async function OPTIONS() {
+  return NextResponse.json({}, { status: 200, headers: corsHeaders });
+}
+
+export async function POST(request: NextRequest) {
   try {
     const { email, password } = await request.json();
 
@@ -53,19 +69,22 @@ export async function POST(request: Request) {
       name: user.name || user.email,
     });
 
-    return NextResponse.json({
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name || user.email,
+    return NextResponse.json(
+      {
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name || user.email,
+        },
+        accessToken: token,
       },
-      accessToken: token,
-    });
+      { headers: corsHeaders }
+    );
   } catch (error) {
     console.error('Mobile auth error:', error);
     return NextResponse.json(
       { error: 'Authentication failed' },
-      { status: 500 }
+      { status: 500, headers: corsHeaders }
     );
   }
 }

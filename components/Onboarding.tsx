@@ -156,10 +156,10 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-[100] bg-gradient-to-b from-primary/5 via-background-light to-background-light dark:from-primary/5 dark:via-background-dark dark:to-background-dark overflow-y-auto">
+    <div className="fixed inset-0 z-[100] bg-white dark:bg-background-dark overflow-y-auto">
       <div className="flex flex-col min-h-full max-w-md mx-auto">
         {/* Skip button */}
-        <div className="flex justify-end p-5 sticky top-0 bg-gradient-to-b from-background-light/95 to-transparent dark:from-background-dark/95 backdrop-blur-xl z-10">
+        <div className="flex justify-end p-5 sticky top-0 bg-white/95 dark:bg-background-dark/95 backdrop-blur-xl z-10">
           <button
             onClick={handleSkip}
             disabled={isCreating}

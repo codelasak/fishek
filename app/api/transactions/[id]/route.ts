@@ -3,6 +3,16 @@ import { getTransactionById, deleteTransaction } from '@/services/databaseServic
 import { auth } from '@/auth';
 
 // GET /api/transactions/[id]
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+};
+
+export async function OPTIONS() {
+  return NextResponse.json({}, { status: 200, headers: corsHeaders });
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -11,22 +21,22 @@ export async function GET(
     const { id } = await params;
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: corsHeaders });
     }
 
     const transaction = await getTransactionById(session.user.id, id);
     if (!transaction) {
       return NextResponse.json(
         { error: 'Transaction not found' },
-        { status: 404 }
+        { status: 404, headers: corsHeaders }
       );
     }
-    return NextResponse.json(transaction);
+    return NextResponse.json(transaction, { headers: corsHeaders });
   } catch (error) {
     console.error('Error fetching transaction:', error);
     return NextResponse.json(
       { error: 'Failed to fetch transaction' },
-      { status: 500 }
+      { status: 500, headers: corsHeaders }
     );
   }
 }
@@ -40,16 +50,16 @@ export async function DELETE(
     const { id } = await params;
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: corsHeaders });
     }
 
     await deleteTransaction(session.user.id, id);
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true }, { headers: corsHeaders });
   } catch (error) {
     console.error('Error deleting transaction:', error);
     return NextResponse.json(
       { error: 'Failed to delete transaction' },
-      { status: 500 }
+      { status: 500, headers: corsHeaders }
     );
   }
 }

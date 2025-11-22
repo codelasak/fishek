@@ -80,7 +80,7 @@ export default function FamilyOnboarding({ onComplete, mode }: FamilyOnboardingP
   const step = steps[currentStep];
 
   return (
-    <div className="fixed inset-0 z-[100] bg-gradient-to-b from-primary/5 via-background-light to-background-light dark:from-primary/5 dark:via-background-dark dark:to-background-dark">
+    <div className="fixed inset-0 z-[100] bg-white dark:bg-background-dark">
       <div className="flex flex-col h-full max-w-md mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between p-5 bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl border-b border-gray-200 dark:border-gray-800">
