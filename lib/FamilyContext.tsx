@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { familiesApi } from '@/services/apiClient';
 
 export type FamilyMode = 'personal' | 'family';
 
@@ -39,6 +40,8 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
 
   // Load saved mode and active family from localStorage
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
     const savedMode = localStorage.getItem('fishek_family_mode') as FamilyMode;
     const savedFamilyId = localStorage.getItem('fishek_active_family_id');
 
@@ -61,13 +64,11 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
   const loadFamilies = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('/api/families');
-      if (response.ok) {
-        const data = await response.json();
-        setFamilies(data.families || []);
-      }
+      const data = await familiesApi.getAll();
+      setFamilies(data.families || []);
     } catch (error) {
       console.error('Error loading families:', error);
+      setFamilies([]);
     } finally {
       setIsLoading(false);
     }
@@ -75,16 +76,22 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
 
   const setMode = (newMode: FamilyMode) => {
     setModeState(newMode);
-    localStorage.setItem('fishek_family_mode', newMode);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('fishek_family_mode', newMode);
+    }
 
     if (newMode === 'personal') {
       setActiveFamilyState(null);
-      localStorage.removeItem('fishek_active_family_id');
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('fishek_active_family_id');
+      }
     }
   };
 
   const setActiveFamily = (family: FamilyInfo | null) => {
     setActiveFamilyState(family);
+    if (typeof window === 'undefined') return;
+    
     if (family) {
       setModeState('family');
       localStorage.setItem('fishek_family_mode', 'family');

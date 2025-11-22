@@ -198,3 +198,50 @@ export const statsApi = {
     return response.data;
   },
 };
+
+// Families API
+export const familiesApi = {
+  getAll: async () => {
+    const headers = await getHeaders();
+    const credentials = isMobile() ? undefined : 'include' as RequestCredentials;
+    
+    const response = await http.get(
+      `${API_BASE}/families`,
+      headers,
+      credentials
+    );
+    
+    if (!response.ok) throw new Error('Failed to fetch families');
+    return response.data;
+  },
+
+  create: async (name: string) => {
+    const headers = await getHeaders();
+    const credentials = isMobile() ? undefined : 'include' as RequestCredentials;
+    
+    const response = await http.post(
+      `${API_BASE}/families`,
+      { name },
+      headers,
+      credentials
+    );
+    
+    if (!response.ok) throw new Error('Failed to create family');
+    return response.data;
+  },
+
+  join: async (inviteCode: string) => {
+    const headers = await getHeaders();
+    const credentials = isMobile() ? undefined : 'include' as RequestCredentials;
+    
+    const response = await http.post(
+      `${API_BASE}/families/join`,
+      { inviteCode },
+      headers,
+      credentials
+    );
+    
+    if (!response.ok) throw new Error('Failed to join family');
+    return response.data;
+  },
+};
