@@ -1,5 +1,6 @@
 import { Transaction, Category } from '../types';
 import { mobileAuth } from '@/lib/mobileAuth';
+import { http, isNativePlatform } from '@/lib/httpClient';
 
 // Use environment variable for API base URL
 // In development: always uses relative /api (same server)
@@ -38,8 +39,7 @@ const API_BASE = getApiBase();
  * Check if running in Capacitor mobile environment
  */
 const isMobile = () => {
-  return typeof window !== 'undefined' && 
-         window.location.protocol === 'capacitor:';
+  return isNativePlatform();
 };
 
 /**
@@ -65,44 +65,58 @@ const getHeaders = async (additionalHeaders: Record<string, string> = {}) => {
 export const transactionsApi = {
   getAll: async (): Promise<Transaction[]> => {
     const headers = await getHeaders();
-    const res = await fetch(`${API_BASE}/transactions`, { 
+    const credentials = isMobile() ? undefined : 'include' as RequestCredentials;
+    
+    const response = await http.get<Transaction[]>(
+      `${API_BASE}/transactions`,
       headers,
-      credentials: isMobile() ? 'omit' : 'include', 
-    });
-    if (!res.ok) throw new Error('Failed to fetch transactions');
-    return res.json();
+      credentials
+    );
+    
+    if (!response.ok) throw new Error('Failed to fetch transactions');
+    return response.data;
   },
 
   getById: async (id: string): Promise<Transaction | null> => {
     const headers = await getHeaders();
-    const res = await fetch(`${API_BASE}/transactions/${id}`, {
+    const credentials = isMobile() ? undefined : 'include' as RequestCredentials;
+    
+    const response = await http.get<Transaction>(
+      `${API_BASE}/transactions/${id}`,
       headers,
-      credentials: isMobile() ? 'omit' : 'include',
-    });
-    if (res.status === 404) return null;
-    if (!res.ok) throw new Error('Failed to fetch transaction');
-    return res.json();
+      credentials
+    );
+    
+    if (response.status === 404) return null;
+    if (!response.ok) throw new Error('Failed to fetch transaction');
+    return response.data;
   },
 
   create: async (transaction: Transaction): Promise<void> => {
     const headers = await getHeaders();
-    const res = await fetch(`${API_BASE}/transactions`, {
-      method: 'POST',
+    const credentials = isMobile() ? undefined : 'include' as RequestCredentials;
+    
+    const response = await http.post(
+      `${API_BASE}/transactions`,
+      transaction,
       headers,
-      credentials: isMobile() ? 'omit' : 'include',
-      body: JSON.stringify(transaction),
-    });
-    if (!res.ok) throw new Error('Failed to create transaction');
+      credentials
+    );
+    
+    if (!response.ok) throw new Error('Failed to create transaction');
   },
 
   delete: async (id: string): Promise<void> => {
     const headers = await getHeaders();
-    const res = await fetch(`${API_BASE}/transactions/${id}`, {
-      method: 'DELETE',
+    const credentials = isMobile() ? undefined : 'include' as RequestCredentials;
+    
+    const response = await http.delete(
+      `${API_BASE}/transactions/${id}`,
       headers,
-      credentials: isMobile() ? 'omit' : 'include',
-    });
-    if (!res.ok) throw new Error('Failed to delete transaction');
+      credentials
+    );
+    
+    if (!response.ok) throw new Error('Failed to delete transaction');
   },
 };
 
@@ -110,45 +124,58 @@ export const transactionsApi = {
 export const categoriesApi = {
   getAll: async (): Promise<Category[]> => {
     const headers = await getHeaders();
-    const res = await fetch(`${API_BASE}/categories`, {
+    const credentials = isMobile() ? undefined : 'include' as RequestCredentials;
+    
+    const response = await http.get<Category[]>(
+      `${API_BASE}/categories`,
       headers,
-      credentials: isMobile() ? 'omit' : 'include',
-    });
-    if (!res.ok) throw new Error('Failed to fetch categories');
-    return res.json();
+      credentials
+    );
+    
+    if (!response.ok) throw new Error('Failed to fetch categories');
+    return response.data;
   },
 
   create: async (category: Omit<Category, 'id' | 'currentSpent'>): Promise<Category> => {
     const headers = await getHeaders();
-    const res = await fetch(`${API_BASE}/categories`, {
-      method: 'POST',
+    const credentials = isMobile() ? undefined : 'include' as RequestCredentials;
+    
+    const response = await http.post<Category>(
+      `${API_BASE}/categories`,
+      category,
       headers,
-      credentials: isMobile() ? 'omit' : 'include',
-      body: JSON.stringify(category),
-    });
-    if (!res.ok) throw new Error('Failed to create category');
-    return res.json();
+      credentials
+    );
+    
+    if (!response.ok) throw new Error('Failed to create category');
+    return response.data;
   },
 
   update: async (category: Category): Promise<void> => {
     const headers = await getHeaders();
-    const res = await fetch(`${API_BASE}/categories/${category.id}`, {
-      method: 'PUT',
+    const credentials = isMobile() ? undefined : 'include' as RequestCredentials;
+    
+    const response = await http.put(
+      `${API_BASE}/categories/${category.id}`,
+      category,
       headers,
-      credentials: isMobile() ? 'omit' : 'include',
-      body: JSON.stringify(category),
-    });
-    if (!res.ok) throw new Error('Failed to update category');
+      credentials
+    );
+    
+    if (!response.ok) throw new Error('Failed to update category');
   },
 
   delete: async (id: string): Promise<void> => {
     const headers = await getHeaders();
-    const res = await fetch(`${API_BASE}/categories/${id}`, {
-      method: 'DELETE',
+    const credentials = isMobile() ? undefined : 'include' as RequestCredentials;
+    
+    const response = await http.delete(
+      `${API_BASE}/categories/${id}`,
       headers,
-      credentials: isMobile() ? 'omit' : 'include',
-    });
-    if (!res.ok) throw new Error('Failed to delete category');
+      credentials
+    );
+    
+    if (!response.ok) throw new Error('Failed to delete category');
   },
 };
 
@@ -156,11 +183,15 @@ export const categoriesApi = {
 export const statsApi = {
   getDashboard: async () => {
     const headers = await getHeaders();
-    const res = await fetch(`${API_BASE}/stats`, {
+    const credentials = isMobile() ? undefined : 'include' as RequestCredentials;
+    
+    const response = await http.get(
+      `${API_BASE}/stats`,
       headers,
-      credentials: isMobile() ? 'omit' : 'include',
-    });
-    if (!res.ok) throw new Error('Failed to fetch stats');
-    return res.json();
+      credentials
+    );
+    
+    if (!response.ok) throw new Error('Failed to fetch stats');
+    return response.data;
   },
 };

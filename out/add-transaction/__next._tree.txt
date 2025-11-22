@@ -1,4 +1,4 @@
-:HL["/_next/static/chunks/b8bb15858a8dcdc6.css","style"]
+:HL["/_next/static/chunks/706b583fd37a90ef.css","style"]
 :HL["https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap","style"]
 :HL["https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200","style"]
-0:{"buildId":"d_b8mBNEAVSuJhQ6AjFT3","tree":{"name":"","paramType":null,"paramKey":"","hasRuntimePrefetch":false,"slots":{"children":{"name":"add-transaction","paramType":null,"paramKey":"add-transaction","hasRuntimePrefetch":false,"slots":{"children":{"name":"__PAGE__","paramType":null,"paramKey":"__PAGE__","hasRuntimePrefetch":false,"slots":null,"isRootLayout":false}},"isRootLayout":false}},"isRootLayout":true},"staleTime":300}
+0:{"buildId":"Zf-GELomDnsTv01V8XQDI","tree":{"name":"","paramType":null,"paramKey":"","hasRuntimePrefetch":false,"slots":{"children":{"name":"add-transaction","paramType":null,"paramKey":"add-transaction","hasRuntimePrefetch":false,"slots":{"children":{"name":"__PAGE__","paramType":null,"paramKey":"__PAGE__","hasRuntimePrefetch":false,"slots":null,"isRootLayout":false}},"isRootLayout":false}},"isRootLayout":true},"staleTime":300}

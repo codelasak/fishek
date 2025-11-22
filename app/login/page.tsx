@@ -6,11 +6,13 @@ import React, { useEffect, useState, Suspense } from 'react';
 import { signIn } from 'next-auth/react';
 import { Capacitor } from '@capacitor/core';
 import { mobileAuth } from '@/lib/mobileAuth';
+import { useMobileAuth } from '@/lib/MobileAuthContext';
 
 const LoginContent: React.FC = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isMobile = Capacitor.isNativePlatform();
+  const { refreshUser } = useMobileAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -40,6 +42,9 @@ const LoginContent: React.FC = () => {
           return;
         }
         console.log('[Mobile Login] Success');
+        // Refresh auth context so dashboard knows we're authenticated
+        await refreshUser();
+        // Keep loading state while redirecting
         router.push('/');
         router.refresh();
       } else {

@@ -9,6 +9,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { mobileAuth, AuthUser } from './mobileAuth';
+import { isNativePlatform } from './httpClient';
 
 interface MobileAuthContextType {
   user: AuthUser | null;
@@ -18,6 +19,7 @@ interface MobileAuthContextType {
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, name: string) => Promise<void>;
   logout: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 }
 
 const MobileAuthContext = createContext<MobileAuthContextType | undefined>(undefined);
@@ -30,8 +32,7 @@ export function MobileAuthProvider({ children }: { children: ReactNode }) {
   // Check platform and hydrate auth state
   useEffect(() => {
     const checkMobile = () => {
-      const mobile = typeof window !== 'undefined' && 
-                     window.location.protocol === 'capacitor:';
+      const mobile = isNativePlatform();
       setIsMobile(mobile);
       return mobile;
     };
@@ -90,6 +91,19 @@ export function MobileAuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  const refreshUser = async () => {
+    setLoading(true);
+    try {
+      const storedUser = await mobileAuth.getUser();
+      setUser(storedUser);
+    } catch (error) {
+      console.error('[MobileAuth] Failed to refresh user', error);
+      setUser(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const login = async (email: string, password: string) => {
     const result = await mobileAuth.login(email, password);
     if (result.error) {
@@ -138,6 +152,7 @@ export function MobileAuthProvider({ children }: { children: ReactNode }) {
         login,
         register,
         logout,
+        refreshUser,
       }}
     >
       {children}

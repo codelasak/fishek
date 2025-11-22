@@ -6,6 +6,7 @@
  */
 
 import { Preferences } from '@capacitor/preferences';
+import { http, isNativePlatform } from './httpClient';
 
 const TOKEN_KEY = 'auth_token';
 const USER_KEY = 'auth_user';
@@ -48,8 +49,7 @@ class MobileAuthService {
    * Check if code is running in Capacitor (mobile) environment
    */
   private isMobile(): boolean {
-    return typeof window !== 'undefined' && 
-           window.location.protocol === 'capacitor:';
+    return isNativePlatform();
   }
 
   /**
@@ -62,31 +62,17 @@ class MobileAuthService {
       
       console.log('[MobileAuth] Attempting login to:', url);
       
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email,
-          password,
-        }),
-      });
+      const response = await http.post(url, { email, password });
 
       console.log('[MobileAuth] Response status:', response.status);
 
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('[MobileAuth] Error response:', errorText);
-        try {
-          const errorJson = JSON.parse(errorText);
-          return { error: errorJson.error || 'Login failed' };
-        } catch {
-          return { error: `Login failed: ${response.status}` };
-        }
+        console.error('[MobileAuth] Error response:', response.data);
+        const errorMessage = response.data?.error || `Login failed: ${response.status}`;
+        return { error: errorMessage };
       }
 
-      const data: AuthTokens = await response.json();
+      const data = response.data as AuthTokens;
       
       // Store token and user data
       await Preferences.set({ key: TOKEN_KEY, value: data.accessToken });
@@ -109,21 +95,15 @@ class MobileAuthService {
       const apiBase = this.getApiBase();
       
       // First register the user
-      const registerResponse = await fetch(`${apiBase}/api/auth/register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name,
-          email,
-          password,
-        }),
+      const response = await http.post(`${apiBase}/api/auth/register`, {
+        name,
+        email,
+        password,
       });
 
-      if (!registerResponse.ok) {
-        const error = await registerResponse.json().catch(() => ({ error: 'Registration failed' }));
-        return { error: error.error || 'Registration failed' };
+      if (!response.ok) {
+        const errorMessage = response.data?.error || 'Registration failed';
+        return { error: errorMessage };
       }
 
       // Then login to get token
