@@ -1,16 +1,16 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getDashboardStats } from '@/services/databaseService';
-import { auth } from '@/auth';
+import { getAuthUser } from '@/lib/auth-helpers';
 
 // GET /api/stats
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user) {
+    const user = await getAuthUser(request);
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const stats = await getDashboardStats(session.user.id);
+    const stats = await getDashboardStats(user.id);
     return NextResponse.json(stats);
   } catch (error) {
     console.error('Error fetching stats:', error);

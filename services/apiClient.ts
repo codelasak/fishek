@@ -54,7 +54,10 @@ const getHeaders = async (additionalHeaders: Record<string, string> = {}) => {
   // In mobile, add Bearer token
   if (isMobile()) {
     const authHeader = await mobileAuth.getAuthHeader();
-    return { ...baseHeaders, ...authHeader };
+    console.log('[apiClient] Auth header:', authHeader);
+    const headers = { ...baseHeaders, ...authHeader };
+    console.log('[apiClient] Final headers:', headers);
+    return headers;
   }
 
   // In web, cookies handle auth automatically

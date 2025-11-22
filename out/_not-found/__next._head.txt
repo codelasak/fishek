@@ -1,7 +1,7 @@
 1:"$Sreact.fragment"
-2:I[42178,["/_next/static/chunks/7fb73e5073f2bd09.js","/_next/static/chunks/c295bbdb2e20ba32.js"],"ViewportBoundary"]
-4:I[42178,["/_next/static/chunks/7fb73e5073f2bd09.js","/_next/static/chunks/c295bbdb2e20ba32.js"],"MetadataBoundary"]
+2:I[42178,["/_next/static/chunks/68f2557ffed26892.js","/_next/static/chunks/c295bbdb2e20ba32.js"],"ViewportBoundary"]
+4:I[42178,["/_next/static/chunks/68f2557ffed26892.js","/_next/static/chunks/c295bbdb2e20ba32.js"],"MetadataBoundary"]
 5:"$Sreact.suspense"
-0:{"buildId":"Zf-GELomDnsTv01V8XQDI","rsc":["$","$1","h",{"children":[["$","meta",null,{"name":"robots","content":"noindex"}],["$","$L2",null,{"children":"$@3"}],["$","div",null,{"hidden":true,"children":["$","$L4",null,{"children":["$","$5",null,{"name":"Next.Metadata","children":"$@6"}]}]}],null]}],"loading":null,"isPartial":false}
+0:{"buildId":"y7m-tJUp7nQZqjn2l86Kd","rsc":["$","$1","h",{"children":[["$","meta",null,{"name":"robots","content":"noindex"}],["$","$L2",null,{"children":"$@3"}],["$","div",null,{"hidden":true,"children":["$","$L4",null,{"children":["$","$5",null,{"name":"Next.Metadata","children":"$@6"}]}]}],null]}],"loading":null,"isPartial":false}
 3:[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1"}]]
 6:[["$","title","0",{"children":"Fishek - Kişisel Finans Takibi"}],["$","meta","1",{"name":"description","content":"AI destekli fiş okuyucu ile kişisel finans yönetimi"}]]

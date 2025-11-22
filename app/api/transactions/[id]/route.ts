@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getTransactionById, deleteTransaction } from '@/services/databaseService';
-import { auth } from '@/auth';
+import { getAuthUser } from '@/lib/auth-helpers';
 
 // GET /api/transactions/[id]
 const corsHeaders = {
@@ -19,12 +19,12 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const session = await auth();
-    if (!session?.user) {
+    const user = await getAuthUser(request);
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: corsHeaders });
     }
 
-    const transaction = await getTransactionById(session.user.id, id);
+    const transaction = await getTransactionById(user.id, id);
     if (!transaction) {
       return NextResponse.json(
         { error: 'Transaction not found' },
@@ -48,12 +48,12 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    const session = await auth();
-    if (!session?.user) {
+    const user = await getAuthUser(request);
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: corsHeaders });
     }
 
-    await deleteTransaction(session.user.id, id);
+    await deleteTransaction(user.id, id);
     return NextResponse.json({ success: true }, { headers: corsHeaders });
   } catch (error) {
     console.error('Error deleting transaction:', error);

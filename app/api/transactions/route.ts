@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getTransactions, saveTransaction } from '@/services/databaseService';
-import { auth } from '@/auth';
+import { getAuthUser } from '@/lib/auth-helpers';
 
 // GET /api/transactions
 const corsHeaders = {
@@ -13,14 +13,14 @@ export async function OPTIONS() {
   return NextResponse.json({}, { status: 200, headers: corsHeaders });
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user) {
+    const user = await getAuthUser(request);
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const transactions = await getTransactions(session.user.id);
+    const transactions = await getTransactions(user.id);
     return NextResponse.json(transactions, { headers: corsHeaders });
   } catch (error) {
     console.error('Error fetching transactions:', error);
@@ -34,13 +34,13 @@ export async function GET() {
 // POST /api/transactions
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user) {
+    const user = await getAuthUser(request);
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: corsHeaders });
     }
 
     const transaction = await request.json();
-    await saveTransaction({ ...transaction, userId: session.user.id });
+    await saveTransaction({ ...transaction, userId: user.id });
     return NextResponse.json({ success: true }, { headers: corsHeaders });
   } catch (error) {
     console.error('Error saving transaction:', error);

@@ -54,6 +54,7 @@ export async function httpRequest<T = any>(options: RequestOptions): Promise<Res
       };
 
       console.log(`[httpClient] Native request to: ${url}`);
+      console.log(`[httpClient] Request headers:`, httpOptions.headers);
       
       const response: HttpResponse = await CapacitorHttp.request(httpOptions);
 
