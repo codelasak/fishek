@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { familiesApi } from '@/services/apiClient';
+import { useMobileAuth } from './MobileAuthContext';
 
 export type FamilyMode = 'personal' | 'family';
 
@@ -28,15 +29,21 @@ interface FamilyContextType {
 const FamilyContext = createContext<FamilyContextType | undefined>(undefined);
 
 export function FamilyProvider({ children }: { children: ReactNode }) {
+  const { isAuthenticated, loading: authLoading } = useMobileAuth();
   const [mode, setModeState] = useState<FamilyMode>('personal');
   const [activeFamily, setActiveFamilyState] = useState<FamilyInfo | null>(null);
   const [families, setFamilies] = useState<FamilyInfo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load families on mount
+  // Load families only when authenticated
   useEffect(() => {
-    loadFamilies();
-  }, []);
+    if (!authLoading && isAuthenticated) {
+      loadFamilies();
+    } else if (!authLoading && !isAuthenticated) {
+      setIsLoading(false);
+      setFamilies([]);
+    }
+  }, [authLoading, isAuthenticated]);
 
   // Load saved mode and active family from localStorage
   useEffect(() => {

@@ -12,13 +12,21 @@ const LoginContent: React.FC = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isMobile = Capacitor.isNativePlatform();
-  const { refreshUser } = useMobileAuth();
+  const { refreshUser, isAuthenticated, loading: authLoading } = useMobileAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Redirect to dashboard if already authenticated
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      console.log('[Login] Already authenticated, redirecting to dashboard');
+      router.push('/');
+    }
+  }, [authLoading, isAuthenticated, router]);
 
   useEffect(() => {
     const errorParam = searchParams?.get('error');

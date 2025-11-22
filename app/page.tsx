@@ -28,13 +28,26 @@ export default function Dashboard() {
   const [language, setLanguage] = useState<'TR' | 'EN'>('TR');
   const [currency, setCurrency] = useState<'TRY' | 'USD'>('TRY');
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [hasCheckedAuth, setHasCheckedAuth] = useState(false);
 
   // Redirect to login if not authenticated
   useEffect(() => {
-    if (!authLoading && !isAuthenticated) {
-      router.push('/login');
+    console.log('[Dashboard] Auth status:', { authLoading, isAuthenticated, isMobile, user, hasCheckedAuth });
+    
+    // Don't redirect while still loading
+    if (authLoading) {
+      return;
     }
-  }, [authLoading, isAuthenticated, router]);
+    
+    // Only redirect once we've confirmed no authentication
+    if (!isAuthenticated && !hasCheckedAuth) {
+      setHasCheckedAuth(true);
+      console.log('[Dashboard] Redirecting to login - not authenticated');
+      router.push('/login');
+    } else if (isAuthenticated && !hasCheckedAuth) {
+      setHasCheckedAuth(true);
+    }
+  }, [authLoading, isAuthenticated, isMobile, user, hasCheckedAuth, router]);
 
   // Check onboarding status
   useEffect(() => {

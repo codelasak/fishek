@@ -1,6 +1,6 @@
 /**
  * Mobile Auth Context
- * 
+ *
  * Provides authentication state management for mobile app
  * Falls back to NextAuth for web browser
  */
@@ -8,6 +8,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useSession } from 'next-auth/react';
 import { mobileAuth, AuthUser } from './mobileAuth';
 import { isNativePlatform } from './httpClient';
 
@@ -24,71 +25,61 @@ interface MobileAuthContextType {
 
 const MobileAuthContext = createContext<MobileAuthContextType | undefined>(undefined);
 
-export function MobileAuthProvider({ children }: { children: ReactNode }) {
+// Web-specific provider that uses NextAuth session
+function WebAuthProvider({ children }: { children: ReactNode }) {
+  const { data: session, status } = useSession();
+  const [user, setUser] = useState<AuthUser | null>(null);
+
+  useEffect(() => {
+    console.log('[MobileAuth] Web session status:', status, 'user:', session?.user);
+    setUser(session?.user as AuthUser | null);
+  }, [session, status]);
+
+  const logout = async () => {
+    try {
+      const { signOut } = await import('next-auth/react');
+      await signOut({ redirect: false });
+      setUser(null);
+    } catch (error) {
+      console.error('[MobileAuth] Failed to sign out from web session', error);
+    }
+  };
+
+  return (
+    <MobileAuthContext.Provider
+      value={{
+        user,
+        loading: status === 'loading',
+        isAuthenticated: !!user,
+        isMobile: false,
+        login: async () => {
+          throw new Error('Use NextAuth signIn for web authentication');
+        },
+        register: async () => {
+          throw new Error('Use API route for web registration');
+        },
+        logout,
+        refreshUser: async () => {
+          // NextAuth SessionProvider handles this automatically
+        },
+      }}
+    >
+      {children}
+    </MobileAuthContext.Provider>
+  );
+}
+
+// Mobile-specific provider that uses JWT storage
+function MobileOnlyAuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isMobile, setIsMobile] = useState(false);
 
-  // Check platform and hydrate auth state
   useEffect(() => {
-    const checkMobile = () => {
-      const mobile = isNativePlatform();
-      setIsMobile(mobile);
-      return mobile;
-    };
-
-    const mobile = checkMobile();
-    let isActive = true;
-    let cleanup: (() => void) | undefined;
-
-    // Load user from storage (mobile or web)
-    if (mobile) {
-      mobileAuth.getUser().then((storedUser) => {
-        if (!isActive) return;
-        setUser(storedUser);
-        setLoading(false);
-      });
-    } else {
-      // Web: sync with NextAuth session so dashboard knows the user is authenticated
-      const syncSession = async () => {
-        try {
-          const { getSession } = await import('next-auth/react');
-          const session = await getSession();
-          if (!isActive) return;
-          setUser(session?.user as AuthUser | null);
-        } catch (error) {
-          console.error('[MobileAuth] Failed to load web session', error);
-        } finally {
-          if (isActive) {
-            setLoading(false);
-          }
-        }
-      };
-
-      syncSession();
-
-      // Keep session fresh on focus/storage changes
-      const handleVisibility = () => {
-        if (document.visibilityState === 'visible') {
-          syncSession();
-        }
-      };
-
-      window.addEventListener('focus', syncSession);
-      window.addEventListener('visibilitychange', handleVisibility);
-      window.addEventListener('storage', syncSession);
-
-      cleanup = () => {
-        window.removeEventListener('focus', syncSession);
-        window.removeEventListener('visibilitychange', handleVisibility);
-        window.removeEventListener('storage', syncSession);
-      };
-    }
-
-    return () => {
-      isActive = false;
-      cleanup?.();
-    };
+    mobileAuth.getUser().then((storedUser) => {
+      console.log('[MobileAuth] Mobile user loaded:', storedUser);
+      setUser(storedUser);
+      setLoading(false);
+    });
   }, []);
 
   const refreshUser = async () => {
@@ -125,21 +116,8 @@ export function MobileAuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = async () => {
-    if (isMobile) {
-      await mobileAuth.logout();
-      setUser(null);
-      return;
-    }
-
-    // Web: also clear NextAuth session if present
-    try {
-      const { signOut } = await import('next-auth/react');
-      await signOut({ redirect: false });
-    } catch (error) {
-      console.error('[MobileAuth] Failed to sign out from web session', error);
-    } finally {
-      setUser(null);
-    }
+    await mobileAuth.logout();
+    setUser(null);
   };
 
   return (
@@ -148,7 +126,7 @@ export function MobileAuthProvider({ children }: { children: ReactNode }) {
         user,
         loading,
         isAuthenticated: !!user,
-        isMobile,
+        isMobile: true,
         login,
         register,
         logout,
@@ -158,6 +136,45 @@ export function MobileAuthProvider({ children }: { children: ReactNode }) {
       {children}
     </MobileAuthContext.Provider>
   );
+}
+
+// Main provider that delegates to platform-specific provider
+export function MobileAuthProvider({ children }: { children: ReactNode }) {
+  const [isMobile, setIsMobile] = useState<boolean | null>(null);
+
+  // Check if we're in mobile platform
+  useEffect(() => {
+    const mobile = isNativePlatform();
+    console.log('[MobileAuth] Platform check:', { mobile });
+    setIsMobile(mobile);
+  }, []);
+
+  // While detecting platform, provide loading context
+  if (isMobile === null) {
+    return (
+      <MobileAuthContext.Provider
+        value={{
+          user: null,
+          loading: true,
+          isAuthenticated: false,
+          isMobile: false,
+          login: async () => {},
+          register: async () => {},
+          logout: async () => {},
+          refreshUser: async () => {},
+        }}
+      >
+        {children}
+      </MobileAuthContext.Provider>
+    );
+  }
+
+  // Delegate to platform-specific provider
+  if (isMobile) {
+    return <MobileOnlyAuthProvider>{children}</MobileOnlyAuthProvider>;
+  }
+
+  return <WebAuthProvider>{children}</WebAuthProvider>;
 }
 
 export function useMobileAuth() {
