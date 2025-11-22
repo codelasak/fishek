@@ -27,7 +27,7 @@ export function MobileAuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
 
-  // Check if running in Capacitor and load user
+  // Check platform and hydrate auth state
   useEffect(() => {
     const checkMobile = () => {
       const mobile = typeof window !== 'undefined' && 
@@ -37,21 +37,57 @@ export function MobileAuthProvider({ children }: { children: ReactNode }) {
     };
 
     const mobile = checkMobile();
+    let isActive = true;
+    let cleanup: (() => void) | undefined;
 
     // Load user from storage (mobile or web)
     if (mobile) {
       mobileAuth.getUser().then((storedUser) => {
+        if (!isActive) return;
         setUser(storedUser);
         setLoading(false);
       });
     } else {
-      // For web, we'll import and use NextAuth dynamically
-      import('next-auth/react').then(({ useSession: _useSession }) => {
-        // Web authentication still uses NextAuth
-        // This will be handled by the SessionProvider wrapper
-        setLoading(false);
-      });
+      // Web: sync with NextAuth session so dashboard knows the user is authenticated
+      const syncSession = async () => {
+        try {
+          const { getSession } = await import('next-auth/react');
+          const session = await getSession();
+          if (!isActive) return;
+          setUser(session?.user as AuthUser | null);
+        } catch (error) {
+          console.error('[MobileAuth] Failed to load web session', error);
+        } finally {
+          if (isActive) {
+            setLoading(false);
+          }
+        }
+      };
+
+      syncSession();
+
+      // Keep session fresh on focus/storage changes
+      const handleVisibility = () => {
+        if (document.visibilityState === 'visible') {
+          syncSession();
+        }
+      };
+
+      window.addEventListener('focus', syncSession);
+      window.addEventListener('visibilitychange', handleVisibility);
+      window.addEventListener('storage', syncSession);
+
+      cleanup = () => {
+        window.removeEventListener('focus', syncSession);
+        window.removeEventListener('visibilitychange', handleVisibility);
+        window.removeEventListener('storage', syncSession);
+      };
     }
+
+    return () => {
+      isActive = false;
+      cleanup?.();
+    };
   }, []);
 
   const login = async (email: string, password: string) => {
@@ -75,8 +111,21 @@ export function MobileAuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = async () => {
-    await mobileAuth.logout();
-    setUser(null);
+    if (isMobile) {
+      await mobileAuth.logout();
+      setUser(null);
+      return;
+    }
+
+    // Web: also clear NextAuth session if present
+    try {
+      const { signOut } = await import('next-auth/react');
+      await signOut({ redirect: false });
+    } catch (error) {
+      console.error('[MobileAuth] Failed to sign out from web session', error);
+    } finally {
+      setUser(null);
+    }
   };
 
   return (

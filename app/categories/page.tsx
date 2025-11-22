@@ -9,6 +9,7 @@ import ConfirmDialog from '@/components/ConfirmDialog';
 import SwipeableCard from '@/components/SwipeableCard';
 import EmptyState from '@/components/EmptyState';
 import Toast from '@/components/Toast';
+import Modal from '@/components/Modal';
 import { useFamily } from '@/lib/FamilyContext';
 
 export default function Categories() {
@@ -39,6 +40,8 @@ export default function Categories() {
   });
   const router = useRouter();
 
+  const resolveIcon = (icon: string) => (icon === 'savings' ? 'account_balance_wallet' : icon);
+
   const loadCategories = async () => {
     try {
       let categoriesData;
@@ -53,7 +56,7 @@ export default function Categories() {
         categoriesData = await categoriesApi.getAll();
       }
       
-      setCategories(categoriesData);
+      setCategories(categoriesData.map((c: Category) => ({ ...c, icon: resolveIcon(c.icon) })));
     } catch (error) {
       console.error('Error loading categories:', error);
     } finally {
@@ -82,7 +85,7 @@ export default function Categories() {
 
   const iconOptions = activeTab === TransactionType.EXPENSE
     ? ['shopping_cart', 'restaurant', 'directions_bus', 'receipt_long', 'sell', 'payments']
-    : ['work', 'payments', 'attach_money', 'savings'];
+    : ['work', 'payments', 'attach_money', 'account_balance_wallet'];
 
   const colorOptions = [
     { name: 'Yeşil', bg: 'bg-green-100', text: 'text-green-700', value: 'bg-green-100 text-green-700' },
@@ -198,7 +201,7 @@ export default function Categories() {
     setEditingCategory(category);
     setNewName(category.name);
     setNewBudget(category.budgetLimit?.toString() || '');
-    setNewIcon(category.icon);
+    setNewIcon(resolveIcon(category.icon));
     setNewColor(category.color);
     setActiveTab(category.type);
     setShowForm(true);
@@ -299,27 +302,27 @@ export default function Categories() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background-light dark:bg-background-dark pb-nav-safe">
-        <header className="sticky top-0 bg-background-light/90 dark:bg-background-dark/90 backdrop-blur z-10">
+      <div className="min-h-screen bg-gradient-to-b from-primary/5 via-background-light to-background-light dark:from-primary/5 dark:via-background-dark dark:to-background-dark pb-nav-safe">
+        <header className="sticky top-0 bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl z-10 border-b border-gray-200 dark:border-gray-800">
           <div className="flex items-center p-4 justify-between">
-            <div className="w-10 h-10 bg-gray-200 dark:bg-gray-800 rounded-full animate-pulse"></div>
-            <div className="h-5 w-40 bg-gray-200 dark:bg-gray-800 rounded animate-pulse"></div>
-            <div className="w-10 h-10 bg-gray-200 dark:bg-gray-800 rounded-full animate-pulse"></div>
+            <div className="w-10 h-10 bg-gray-200 dark:bg-gray-800 rounded-2xl animate-pulse"></div>
+            <div className="h-5 w-40 bg-gray-200 dark:bg-gray-800 rounded-full animate-pulse"></div>
+            <div className="w-10 h-10 bg-gray-200 dark:bg-gray-800 rounded-2xl animate-pulse"></div>
           </div>
-          <div className="flex border-b border-gray-200 dark:border-white/10">
-            <div className="flex-1 h-10 bg-gray-100 dark:bg-gray-800/50 animate-pulse"></div>
-            <div className="flex-1 h-10 bg-gray-100 dark:bg-gray-800/50 animate-pulse"></div>
+          <div className="flex border-b border-gray-200 dark:border-gray-800">
+            <div className="flex-1 h-11 bg-gray-100 dark:bg-gray-800/50 animate-pulse"></div>
+            <div className="flex-1 h-11 bg-gray-100 dark:bg-gray-800/50 animate-pulse"></div>
           </div>
         </header>
 
         <div className="p-4 space-y-4">
-          <div className="h-12 bg-gray-100 dark:bg-gray-800 rounded-xl animate-pulse"></div>
+          <div className="h-12 bg-white dark:bg-surface-dark rounded-2xl animate-pulse shadow-sm"></div>
 
           {[...Array(5)].map((_, i) => (
-            <div key={i} className="flex items-center gap-4 p-4 bg-white dark:bg-surface-dark rounded-2xl border border-gray-50 dark:border-white/5 animate-pulse">
-              <div className="size-12 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
+            <div key={i} className="flex items-center gap-4 p-4 bg-white dark:bg-surface-dark rounded-2xl border border-gray-100 dark:border-gray-800 animate-pulse shadow-sm">
+              <div className="size-14 bg-gray-200 dark:bg-gray-700 rounded-2xl"></div>
               <div className="flex-1 space-y-2">
-                <div className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                <div className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
                 <div className="h-2 w-full bg-gray-100 dark:bg-gray-800 rounded-full"></div>
               </div>
               <div className="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
@@ -332,19 +335,19 @@ export default function Categories() {
 
   return (
     <>
-      <div className="min-h-screen bg-background-light dark:bg-background-dark pb-nav-safe">
-          <header className="sticky top-0 bg-background-light/90 dark:bg-background-dark/90 backdrop-blur z-10">
+      <div className="min-h-screen bg-gradient-to-b from-primary/5 via-background-light to-background-light dark:from-primary/5 dark:via-background-dark dark:to-background-dark pb-nav-safe">
+          <header className="sticky top-0 bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl z-10 border-b border-gray-200 dark:border-gray-800 shadow-sm">
               <div className="flex items-center p-4 justify-between">
-                  <button onClick={() => router.push('/')} className="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10">
+                  <button onClick={() => router.push('/')} className="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 active:scale-95 transition-all">
                        <span className="material-symbols-outlined">arrow_back</span>
                   </button>
-                  <h1 className="text-lg font-bold">Kategorileri Yönet</h1>
+                  <h1 className="text-lg font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-400 bg-clip-text text-transparent">Kategorileri Yönet</h1>
                   <button
                     onClick={() => {
                       setBulkMode(!bulkMode);
                       setSelectedIds(new Set());
                     }}
-                    className={`p-2 -mr-2 rounded-full transition ${
+                    className={`p-2 -mr-2 rounded-full transition-all ${
                       bulkMode
                         ? 'bg-primary/20 text-primary'
                         : 'hover:bg-black/5 dark:hover:bg-white/10'
@@ -356,39 +359,39 @@ export default function Categories() {
                   </button>
               </div>
 
-              <div className="flex border-b border-gray-200 dark:border-white/10">
+              <div className="flex border-b border-gray-200 dark:border-gray-800">
                   <button
                       onClick={() => setActiveTab(TransactionType.EXPENSE)}
-                      className={`flex-1 pb-3 font-bold text-sm transition-colors relative ${activeTab === TransactionType.EXPENSE ? 'text-primary' : 'text-gray-500'}`}
+                      className={`flex-1 pb-3 font-bold text-sm transition-all relative ${activeTab === TransactionType.EXPENSE ? 'text-primary' : 'text-gray-500'}`}
                   >
                       Giderler
-                      {activeTab === TransactionType.EXPENSE && <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-primary rounded-t-full"></div>}
+                      {activeTab === TransactionType.EXPENSE && <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-gradient-to-r from-transparent via-primary to-transparent rounded-t-full"></div>}
                   </button>
                   <button
                       onClick={() => setActiveTab(TransactionType.INCOME)}
-                      className={`flex-1 pb-3 font-bold text-sm transition-colors relative ${activeTab === TransactionType.INCOME ? 'text-primary' : 'text-gray-500'}`}
+                      className={`flex-1 pb-3 font-bold text-sm transition-all relative ${activeTab === TransactionType.INCOME ? 'text-primary' : 'text-gray-500'}`}
                   >
                       Gelirler
-                      {activeTab === TransactionType.INCOME && <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-primary rounded-t-full"></div>}
+                      {activeTab === TransactionType.INCOME && <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-gradient-to-r from-transparent via-primary to-transparent rounded-t-full"></div>}
                   </button>
               </div>
           </header>
 
           <div className="p-4 space-y-4">
               {/* Search */}
-              <div className="bg-gray-100 dark:bg-surface-dark rounded-xl flex items-center h-12 px-4 gap-2">
-                  <span className="material-symbols-outlined text-gray-500">search</span>
+              <div className="bg-white dark:bg-surface-dark rounded-2xl flex items-center h-12 px-4 gap-3 shadow-sm border border-gray-200 dark:border-gray-800">
+                  <span className="material-symbols-outlined text-gray-400">search</span>
                   <input
                       type="text"
                       placeholder="Kategorilerde ara..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="bg-transparent flex-1 outline-none text-sm"
+                      className="bg-transparent flex-1 outline-none text-sm placeholder:text-gray-400"
                   />
                   {searchQuery && (
                       <button
                           onClick={() => setSearchQuery('')}
-                          className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 active:scale-90 transition"
+                          className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 active:scale-90 transition-all"
                       >
                           <span className="material-symbols-outlined text-xl">close</span>
                       </button>
@@ -406,7 +409,7 @@ export default function Categories() {
                               onEdit={() => handleEditCategory(category)}
                               onDelete={() => setDeleteConfirm({ open: true, category })}
                           >
-                              <div className="flex items-center gap-4 p-4 shadow-sm border border-gray-50 dark:border-white/5">
+                              <div className="flex items-center gap-4 p-4 bg-white dark:bg-surface-dark rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 hover:shadow-md hover:border-gray-200 dark:hover:border-gray-700 transition-all">
                                   {bulkMode && (
                                       <input
                                           type="checkbox"
@@ -420,19 +423,19 @@ export default function Categories() {
                                               }
                                               setSelectedIds(newSelected);
                                           }}
-                                          className="size-5 rounded border-gray-300 text-primary focus:ring-primary"
+                                          className="size-5 rounded-lg border-gray-300 text-primary focus:ring-primary"
                                       />
                                   )}
                                   <div className="relative">
-                                      <div className={`size-12 rounded-xl flex items-center justify-center ${category.type === TransactionType.EXPENSE ? 'bg-red-500/10 text-red-500' : 'bg-primary/10 text-primary'}`}>
-                                          <span className="material-symbols-outlined">{category.icon}</span>
+                                      <div className={`size-14 rounded-2xl flex items-center justify-center shadow-sm ${category.type === TransactionType.EXPENSE ? 'bg-gradient-to-br from-red-500/10 to-red-500/5 text-red-500' : 'bg-gradient-to-br from-primary/10 to-primary/5 text-primary'}`}>
+                                          <span className="material-symbols-outlined text-2xl">{resolveIcon(category.icon)}</span>
                                       </div>
                                       {(() => {
                                           const warningLevel = getBudgetWarningLevel(category);
                                           if (warningLevel === 'none') return null;
 
                                           return (
-                                              <div className={`absolute -top-1 -right-1 size-5 rounded-full flex items-center justify-center ${
+                                              <div className={`absolute -top-1 -right-1 size-5 rounded-full flex items-center justify-center shadow-lg ${
                                                   warningLevel === 'danger' ? 'bg-red-500' : 'bg-orange-500'
                                               }`}>
                                                   <span className="material-symbols-outlined text-white text-xs">
@@ -443,18 +446,18 @@ export default function Categories() {
                                       })()}
                                   </div>
                                   <div className="flex-1 min-w-0">
-                                      <div className="flex justify-between mb-1">
-                                          <h3 className="font-bold truncate">{category.name}</h3>
+                                      <div className="flex justify-between mb-1.5">
+                                          <h3 className="font-bold text-base truncate">{category.name}</h3>
                                           {category.budgetLimit ? (
-                                              <span className="text-xs font-medium text-gray-500">
+                                              <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">
                                                   ₺{category.currentSpent} / ₺{category.budgetLimit}
                                               </span>
                                           ) : null}
                                       </div>
                                       {category.budgetLimit ? (
-                                          <div className="h-1.5 w-full bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                                          <div className="h-2 w-full bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden shadow-inner">
                                               <div
-                                                  className={`h-full rounded-full ${category.currentSpent && category.currentSpent > category.budgetLimit ? 'bg-red-500' : 'bg-primary'}`}
+                                                  className={`h-full rounded-full transition-all duration-500 ${category.currentSpent && category.currentSpent > category.budgetLimit ? 'bg-gradient-to-r from-red-500 to-red-600' : 'bg-gradient-to-r from-primary to-primary/80'}`}
                                                   style={{ width: `${Math.min(100, ((category.currentSpent || 0) / category.budgetLimit) * 100)}%` }}
                                               ></div>
                                           </div>
@@ -470,7 +473,7 @@ export default function Categories() {
           <div className="fixed bottom-nav-safe right-6">
                <button
                   onClick={() => setShowForm(true)}
-                  className="h-14 w-14 bg-primary text-[#102216] rounded-full shadow-lg shadow-primary/30 flex items-center justify-center active:scale-90 transition-transform"
+                  className="h-16 w-16 bg-gradient-to-br from-primary to-primary/90 text-white rounded-full shadow-xl shadow-primary/40 flex items-center justify-center active:scale-90 transition-transform hover:shadow-2xl"
                >
                   <span className="material-symbols-outlined text-3xl">add</span>
                </button>
@@ -478,8 +481,8 @@ export default function Categories() {
 
           {/* Bulk action bar */}
           {bulkMode && selectedIds.size > 0 && (
-              <div className="fixed bottom-nav-safe left-4 right-4 bg-white dark:bg-surface-dark rounded-2xl shadow-2xl border border-gray-100 dark:border-white/10 p-4 flex items-center justify-between animate-[slideUp_0.3s_ease-out]">
-                  <span className="text-sm font-semibold">
+              <div className="fixed bottom-nav-safe left-4 right-4 bg-white/95 dark:bg-surface-dark/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-gray-200 dark:border-gray-800 p-4 flex items-center justify-between animate-scaleIn">
+                  <span className="text-sm font-bold">
                       {selectedIds.size} kategori seçildi
                   </span>
                   <button
@@ -492,121 +495,119 @@ export default function Categories() {
                               } as Category
                           });
                       }}
-                      className="px-4 py-2 bg-red-500 text-white rounded-xl font-semibold text-sm hover:bg-red-600 active:scale-95 transition"
+                      className="px-5 py-2.5 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl font-semibold text-sm hover:from-red-600 hover:to-red-700 active:scale-95 transition-all shadow-lg"
                   >
                       Sil
                   </button>
               </div>
           )}
 
-          {/* Add Category Sheet */}
-          {showForm && (
-            <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm">
-              <div className="w-full max-w-md bg-white dark:bg-surface-dark rounded-t-3xl shadow-2xl animate-[slideUp_0.25s_ease-out] max-h-[90vh] flex flex-col">
-                {/* Header - Fixed */}
-                <div className="flex items-center justify-between p-5 pb-4 border-b border-gray-100 dark:border-gray-800">
-                  <h2 className="text-lg font-bold">
-                    {editingCategory ? 'Kategoriyi Düzenle' : 'Yeni Kategori'}
-                  </h2>
-                  <button
-                    onClick={() => {
-                      setShowForm(false);
-                      setEditingCategory(null);
-                      setError(null);
-                    }}
-                    className="text-gray-400"
-                  >
-                    <span className="material-symbols-outlined">close</span>
-                  </button>
-                </div>
-
-                {/* Scrollable Content */}
-                <div className="flex-1 overflow-y-auto px-5 py-4">
-                  <div className="space-y-4">
-                    <div className="text-sm text-gray-600 dark:text-gray-300">Tip: {activeTab === TransactionType.EXPENSE ? 'Gider' : 'Gelir'}</div>
-                    <div className="space-y-2">
-                      <label className="text-sm font-semibold">Kategori Adı</label>
-                      <input
-                        value={newName}
-                        onChange={(e) => setNewName(e.target.value)}
-                        placeholder="Örn: Market, Maaş..."
-                        className="w-full h-12 px-4 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 outline-none focus:ring-2 focus:ring-primary/30"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-sm font-semibold">Bütçe Limiti (opsiyonel)</label>
-                      <input
-                        type="number"
-                        inputMode="decimal"
-                        min="0"
-                        value={newBudget}
-                        onChange={(e) => setNewBudget(e.target.value)}
-                        placeholder="Örn: 2000"
-                        className="w-full h-12 px-4 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 outline-none focus:ring-2 focus:ring-primary/30"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-sm font-semibold">Simge</label>
-                      <div className="flex flex-wrap gap-2">
-                        {iconOptions.map((icon) => (
-                          <button
-                            key={icon}
-                            onClick={() => setNewIcon(icon)}
-                            className={`flex items-center justify-center h-11 w-11 rounded-xl border transition ${
-                              newIcon === icon
-                                ? 'border-primary bg-primary/10 text-primary'
-                                : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300'
-                            }`}
-                          >
-                            <span className="material-symbols-outlined">{icon}</span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-sm font-semibold">Renk (opsiyonel)</label>
-                      <div className="flex flex-wrap gap-2">
-                        {colorOptions.map((color) => (
-                          <button
-                            key={color.value}
-                            onClick={() => setNewColor(color.value)}
-                            className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition ${
-                              newColor === color.value
-                                ? 'border-primary bg-primary/10'
-                                : 'border-gray-200 dark:border-gray-700'
-                            }`}
-                          >
-                            <div className={`size-6 rounded-full ${color.bg}`}></div>
-                            <span className="text-xs font-medium">{color.name}</span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {error && (
-                      <div className="text-sm text-red-500 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 rounded-xl p-3">
-                        {error}
-                      </div>
-                    )}
+          {/* Add/Edit Category Modal */}
+          <Modal
+            isOpen={showForm}
+            onClose={() => {
+              setShowForm(false);
+              setEditingCategory(null);
+              setError(null);
+            }}
+            title={editingCategory ? 'Kategoriyi Düzenle' : 'Yeni Kategori'}
+            footer={
+              <button
+                onClick={handleSaveCategory}
+                disabled={saving}
+                className="w-full h-12 bg-gradient-to-r from-primary to-primary/90 text-white rounded-xl font-bold shadow-lg shadow-primary/30 hover:from-primary/90 hover:to-primary active:scale-[0.98] transition-all disabled:opacity-70"
+              >
+                {saving ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    <span>Kaydediliyor...</span>
                   </div>
-                </div>
+                ) : (
+                  editingCategory ? 'Güncelle' : 'Kaydet'
+                )}
+              </button>
+            }
+          >
+            <div className="space-y-5">
+              <div className="px-4 py-3 bg-primary/5 rounded-2xl border border-primary/10">
+                <p className="text-sm font-semibold text-primary">
+                  Tip: {activeTab === TransactionType.EXPENSE ? '🔻 Gider' : '🔺 Gelir'}
+                </p>
+              </div>
 
-                {/* Footer - Fixed */}
-                <div className="p-5 pt-4 border-t border-gray-100 dark:border-gray-800">
-                  <button
-                    onClick={handleSaveCategory}
-                    disabled={saving}
-                    className="w-full h-12 bg-primary text-[#102216] rounded-xl font-bold shadow-lg shadow-primary/25 hover:bg-primary/90 active:scale-[0.98] transition disabled:opacity-70"
-                  >
-                    {saving ? 'Kaydediliyor...' : editingCategory ? 'Güncelle' : 'Kaydet'}
-                  </button>
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-gray-700 dark:text-gray-300">Kategori Adı</label>
+                <input
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  placeholder="Örn: Market, Maaş..."
+                  className="w-full h-14 px-4 rounded-2xl bg-gray-50 dark:bg-gray-900 border-2 border-gray-200 dark:border-gray-700 outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-gray-700 dark:text-gray-300">Bütçe Limiti (opsiyonel)</label>
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-semibold">₺</span>
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    min="0"
+                    value={newBudget}
+                    onChange={(e) => setNewBudget(e.target.value)}
+                    placeholder="2000"
+                    className="w-full h-14 pl-8 pr-4 rounded-2xl bg-gray-50 dark:bg-gray-900 border-2 border-gray-200 dark:border-gray-700 outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all"
+                  />
                 </div>
               </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-gray-700 dark:text-gray-300">Simge</label>
+                <div className="flex flex-wrap gap-2">
+                  {iconOptions.map((icon) => (
+                    <button
+                      key={icon}
+                      onClick={() => setNewIcon(icon)}
+                      className={`flex items-center justify-center h-14 w-14 rounded-2xl border-2 transition-all ${
+                        newIcon === icon
+                          ? 'border-primary bg-primary/10 text-primary shadow-lg shadow-primary/20 scale-105'
+                          : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
+                      }`}
+                    >
+                      <span className="material-symbols-outlined text-2xl">{icon}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-gray-700 dark:text-gray-300">Renk (opsiyonel)</label>
+                <div className="flex flex-wrap gap-2">
+                  {colorOptions.map((color) => (
+                    <button
+                      key={color.value}
+                      onClick={() => setNewColor(color.value)}
+                      className={`flex items-center gap-2 px-4 py-3 rounded-2xl border-2 transition-all ${
+                        newColor === color.value
+                          ? 'border-primary bg-primary/10 shadow-lg shadow-primary/20 scale-105'
+                          : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
+                      }`}
+                    >
+                      <div className={`size-7 rounded-xl ${color.bg} shadow-sm`}></div>
+                      <span className="text-sm font-semibold">{color.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {error && (
+                <div className="text-sm font-semibold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 rounded-2xl p-4 flex items-center gap-2 animate-shake">
+                  <span className="material-symbols-outlined text-lg">error</span>
+                  {error}
+                </div>
+              )}
             </div>
-          )}
+          </Modal>
 
           <ConfirmDialog
             isOpen={deleteConfirm.open}

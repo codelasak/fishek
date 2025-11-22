@@ -74,81 +74,139 @@ const LoginContent: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-background-light dark:bg-background-dark text-center">
-      <div className="w-full max-w-md">
-        <div className="mb-10">
-          <div className="inline-flex h-20 w-20 items-center justify-center rounded-3xl bg-primary/10 text-primary mb-6">
-            <span className="material-symbols-outlined text-5xl">receipt_long</span>
-          </div>
-          <h1 className="text-3xl font-bold mb-2">Tekrar hoş geldin!</h1>
-          <p className="text-gray-500 dark:text-gray-400">Kişisel finansını takip etmeye devam et.</p>
-        </div>
-
-        {error && (
-          <div className="mb-4 rounded-xl bg-red-50 text-red-700 p-3 text-sm border border-red-100 dark:bg-red-900/30 dark:border-red-800 dark:text-red-100">
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleLogin} className="space-y-5">
-          <div className="text-left">
-            <label className="block mb-2 text-sm font-bold text-gray-700 dark:text-gray-300">E-posta</label>
-            <input
-              type="email"
-              required
-              autoComplete="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="e-posta adresinizi girin"
-              className="w-full h-14 px-4 rounded-xl bg-white dark:bg-surface-dark border border-gray-200 dark:border-gray-700 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
-            />
-          </div>
-          <div className="text-left">
-            <label className="block mb-2 text-sm font-bold text-gray-700 dark:text-gray-300">Şifre</label>
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-primary/5 to-background-light dark:from-primary/10 dark:to-background-dark">
+      {/* Safe area top padding for iOS */}
+      <div className="pt-safe"></div>
+      
+      <div className="flex-1 flex flex-col items-center justify-center p-6 pb-12">
+        <div className="w-full max-w-md">
+          {/* App Icon */}
+          <div className="flex justify-center mb-8">
             <div className="relative">
-              <input
-                type={showPassword ? 'text' : 'password'}
-                required
-                autoComplete="current-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="şifrenizi girin"
-                className="w-full h-14 px-4 rounded-xl bg-white dark:bg-surface-dark border border-gray-200 dark:border-gray-700 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all pr-12"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword((prev) => !prev)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400"
-              >
-                <span className="material-symbols-outlined">{showPassword ? 'visibility_off' : 'visibility'}</span>
-              </button>
+              <div className="absolute inset-0 bg-primary/20 rounded-[2.5rem] blur-2xl"></div>
+              <div className="relative inline-flex h-24 w-24 items-center justify-center rounded-[2rem] bg-gradient-to-br from-primary to-primary/80 text-[#102216] shadow-2xl shadow-primary/30">
+                <span className="material-symbols-outlined text-6xl font-light">receipt_long</span>
+              </div>
             </div>
           </div>
 
-          <div className="text-right">
-            <button type="button" className="text-sm font-bold text-primary">
-              Şifremi Unuttum
-            </button>
+          {/* Header */}
+          <div className="mb-8 text-center">
+            <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">
+              Tekrar hoş geldin!
+            </h1>
+            <p className="text-base text-gray-600 dark:text-gray-400">
+              Kişisel finansını takip etmeye devam et.
+            </p>
           </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full h-14 bg-primary text-[#102216] rounded-xl font-bold text-lg shadow-lg shadow-primary/25 hover:bg-primary/90 active:scale-[0.98] transition-all disabled:opacity-70 disabled:cursor-not-allowed"
-          >
-            {loading ? 'Giriş yapılıyor...' : 'Giriş Yap'}
-          </button>
-        </form>
+          {/* Error Alert */}
+          {error && (
+            <div className="mb-6 rounded-2xl bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800/50 p-4 animate-shake">
+              <div className="flex items-start gap-3">
+                <span className="material-symbols-outlined text-red-500 text-xl">error</span>
+                <p className="flex-1 text-sm text-red-700 dark:text-red-300 font-medium">{error}</p>
+              </div>
+            </div>
+          )}
 
-        <div className="mt-8">
-          <p className="text-gray-500 dark:text-gray-400">
-            Hesabın yok mu?{' '}
-            <Link href="/register" className="text-primary font-bold ml-1">
-              Hesap Oluştur
-            </Link>
-          </p>
+          {/* Form */}
+          <form onSubmit={handleLogin} className="space-y-4">
+            {/* Email Input */}
+            <div>
+              <label className="block mb-2 text-sm font-semibold text-gray-700 dark:text-gray-300 px-1">
+                E-posta
+              </label>
+              <div className="relative">
+                <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xl">
+                  mail
+                </span>
+                <input
+                  type="email"
+                  required
+                  autoComplete="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="ornek@email.com"
+                  className="w-full h-14 pl-12 pr-4 rounded-2xl bg-white dark:bg-surface-dark border border-gray-200 dark:border-gray-700 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all text-base placeholder:text-gray-400"
+                />
+              </div>
+            </div>
+
+            {/* Password Input */}
+            <div>
+              <label className="block mb-2 text-sm font-semibold text-gray-700 dark:text-gray-300 px-1">
+                Şifre
+              </label>
+              <div className="relative">
+                <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xl">
+                  lock
+                </span>
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full h-14 pl-12 pr-14 rounded-2xl bg-white dark:bg-surface-dark border border-gray-200 dark:border-gray-700 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all text-base placeholder:text-gray-400"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors active:scale-95"
+                >
+                  <span className="material-symbols-outlined text-xl">
+                    {showPassword ? 'visibility_off' : 'visibility'}
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            {/* Forgot Password */}
+            <div className="flex justify-end pt-1">
+              <button 
+                type="button" 
+                className="text-sm font-semibold text-primary hover:text-primary/80 transition-colors active:scale-95"
+              >
+                Şifremi Unuttum
+              </button>
+            </div>
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full h-14 bg-gradient-to-r from-primary to-primary/90 text-[#102216] rounded-2xl font-bold text-lg shadow-xl shadow-primary/25 hover:shadow-2xl hover:shadow-primary/30 active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-not-allowed disabled:shadow-lg mt-6 relative overflow-hidden"
+            >
+              {loading && (
+                <span className="absolute inset-0 flex items-center justify-center">
+                  <span className="animate-spin rounded-full h-5 w-5 border-2 border-[#102216]/30 border-t-[#102216]"></span>
+                </span>
+              )}
+              <span className={loading ? 'opacity-0' : ''}>
+                Giriş Yap
+              </span>
+            </button>
+          </form>
+
+          {/* Register Link */}
+          <div className="mt-8 text-center">
+            <p className="text-gray-600 dark:text-gray-400">
+              Hesabın yok mu?{' '}
+              <Link 
+                href="/register" 
+                className="text-primary font-bold hover:text-primary/80 transition-colors active:scale-95 inline-block"
+              >
+                Hesap Oluştur
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
+
+      {/* Safe area bottom padding for iOS */}
+      <div className="pb-safe"></div>
     </div>
   );
 };

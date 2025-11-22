@@ -22,6 +22,28 @@ export interface AuthTokens {
 }
 
 class MobileAuthService {
+  private getApiBase(): string {
+    if (typeof window === 'undefined') return '';
+
+    const apiUrl = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/$/, '');
+    const isCapacitor = window.location.protocol === 'capacitor:';
+    const isLocalhost =
+      window.location.hostname === 'localhost' ||
+      window.location.hostname === '127.0.0.1' ||
+      window.location.hostname.includes('192.168.');
+
+    if (isCapacitor) {
+      if (apiUrl) return apiUrl;
+      // Fallback to production backend so mobile builds keep working even if env is missing
+      console.warn('[MobileAuth] NEXT_PUBLIC_API_URL is missing; falling back to production backend URL');
+      return 'https://fishek.coolify.fennaver.tech';
+    }
+
+    // For web: use relative API when on localhost; otherwise prefer configured URL
+    if (isLocalhost) return '';
+    return apiUrl || '';
+  }
+
   /**
    * Check if code is running in Capacitor (mobile) environment
    */
@@ -35,7 +57,7 @@ class MobileAuthService {
    */
   async login(email: string, password: string): Promise<{ user?: AuthUser; error?: string }> {
     try {
-      const apiBase = process.env.NEXT_PUBLIC_API_URL || '';
+      const apiBase = this.getApiBase();
       const url = `${apiBase}/api/auth/mobile`;
       
       console.log('[MobileAuth] Attempting login to:', url);
@@ -73,8 +95,9 @@ class MobileAuthService {
       console.log('[MobileAuth] Login successful');
       return { user: data.user };
     } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown';
       console.error('[MobileAuth] Login error:', error);
-      return { error: `Network error: ${error instanceof Error ? error.message : 'Unknown'}` };
+      return { error: `Network error: ${message}` };
     }
   }
 
@@ -83,7 +106,7 @@ class MobileAuthService {
    */
   async register(name: string, email: string, password: string): Promise<{ user?: AuthUser; error?: string }> {
     try {
-      const apiBase = process.env.NEXT_PUBLIC_API_URL || '';
+      const apiBase = this.getApiBase();
       
       // First register the user
       const registerResponse = await fetch(`${apiBase}/api/auth/register`, {

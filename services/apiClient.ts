@@ -5,13 +5,22 @@ import { mobileAuth } from '@/lib/mobileAuth';
 // In development: always uses relative /api (same server)
 // In production mobile (Capacitor): uses deployed backend URL from NEXT_PUBLIC_API_URL
 const getApiBase = () => {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, '');
+
+  // Capacitor: always prefer configured backend (relative URLs break under capacitor://)
+  if (typeof window !== 'undefined' && window.location.protocol === 'capacitor:') {
+    if (apiUrl) return `${apiUrl}/api`;
+    // Fallback to production backend to avoid capacitor://localhost fetch failures
+    console.warn('[apiClient] NEXT_PUBLIC_API_URL missing; falling back to production backend URL');
+    return 'https://fishek.coolify.fennaver.tech/api';
+  }
+
   // Server-side: always use relative path
   if (typeof window === 'undefined') return '/api';
   
   // Client-side in development: use relative path
   // Client-side in production mobile: use NEXT_PUBLIC_API_URL if set
   // Only use NEXT_PUBLIC_API_URL if it's explicitly set and we're not on localhost
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
   const isLocalhost = window.location.hostname === 'localhost' || 
                       window.location.hostname === '127.0.0.1' ||
                       window.location.hostname.includes('192.168.');
@@ -64,12 +73,13 @@ export const transactionsApi = {
     return res.json();
   },
 
-  getById: async (id: string): Promise<Transaction> => {
+  getById: async (id: string): Promise<Transaction | null> => {
     const headers = await getHeaders();
     const res = await fetch(`${API_BASE}/transactions/${id}`, {
       headers,
       credentials: isMobile() ? 'omit' : 'include',
     });
+    if (res.status === 404) return null;
     if (!res.ok) throw new Error('Failed to fetch transaction');
     return res.json();
   },
