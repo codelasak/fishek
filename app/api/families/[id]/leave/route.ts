@@ -1,17 +1,17 @@
-import { NextResponse } from 'next/server';
-import { auth } from '@/auth';
+import { NextResponse, NextRequest } from 'next/server';
+import { getAuthUser } from '@/lib/auth-helpers';
 import { db } from '@/db';
 import { familyMembers } from '@/db/schema';
 import { eq, and, count } from 'drizzle-orm';
 
 // POST /api/families/[id]/leave - Leave a family
 export async function POST(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
+    const user = await getAuthUser(request);
+    if (!user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -24,7 +24,7 @@ export async function POST(
       .where(
         and(
           eq(familyMembers.familyId, familyId),
-          eq(familyMembers.userId, session.user.id)
+          eq(familyMembers.userId, user.id)
         )
       )
       .limit(1)
@@ -76,7 +76,7 @@ export async function POST(
       .where(
         and(
           eq(familyMembers.familyId, familyId),
-          eq(familyMembers.userId, session.user.id)
+          eq(familyMembers.userId, user.id)
         )
       )
       .execute();

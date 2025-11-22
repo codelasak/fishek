@@ -1,15 +1,15 @@
-import { NextResponse } from 'next/server';
-import { auth } from '@/auth';
+import { NextRequest, NextResponse } from 'next/server';
+import { getAuthUser } from '@/lib/auth-helpers';
 import { db } from '@/db';
 import { families, familyMembers } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { isValidInviteCode } from '@/lib/inviteCode';
 
 // POST /api/families/join - Join a family using invite code
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
+    const user = await getAuthUser(request);
+    if (!user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -45,7 +45,7 @@ export async function POST(request: Request) {
       .where(
         and(
           eq(familyMembers.familyId, family.id),
-          eq(familyMembers.userId, session.user.id)
+          eq(familyMembers.userId, user.id)
         )
       )
       .limit(1)
@@ -63,7 +63,7 @@ export async function POST(request: Request) {
       .insert(familyMembers)
       .values({
         familyId: family.id,
-        userId: session.user.id,
+        userId: user.id,
         role: 'MEMBER',
       })
       .returning()

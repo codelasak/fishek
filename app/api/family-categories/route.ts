@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server';
-import { auth } from '@/auth';
+import { NextResponse, NextRequest } from 'next/server';
+import { getAuthUser } from '@/lib/auth-helpers';
 import { db } from '@/db';
 import { familyCategories, familyMembers } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
@@ -18,10 +18,10 @@ async function verifyFamilyMembership(familyId: string, userId: string) {
 }
 
 // GET /api/family-categories?familyId=xxx - Get all categories for a family
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
+    const user = await getAuthUser(request);
+    if (!user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -36,7 +36,7 @@ export async function GET(request: Request) {
     }
 
     // Verify user is a family member
-    const member = await verifyFamilyMembership(familyId, session.user.id);
+    const member = await verifyFamilyMembership(familyId, user.id);
     if (!member) {
       return NextResponse.json(
         { error: 'Access denied to this family' },
@@ -62,10 +62,10 @@ export async function GET(request: Request) {
 }
 
 // POST /api/family-categories - Create a new family category
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
+    const user = await getAuthUser(request);
+    if (!user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -80,7 +80,7 @@ export async function POST(request: Request) {
     }
 
     // Verify user is a family member
-    const member = await verifyFamilyMembership(familyId, session.user.id);
+    const member = await verifyFamilyMembership(familyId, user.id);
     if (!member) {
       return NextResponse.json(
         { error: 'Access denied to this family' },
@@ -113,10 +113,10 @@ export async function POST(request: Request) {
 }
 
 // PATCH /api/family-categories - Update a family category
-export async function PATCH(request: Request) {
+export async function PATCH(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
+    const user = await getAuthUser(request);
+    if (!user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -131,7 +131,7 @@ export async function PATCH(request: Request) {
     }
 
     // Verify user is a family member
-    const member = await verifyFamilyMembership(familyId, session.user.id);
+    const member = await verifyFamilyMembership(familyId, user.id);
     if (!member) {
       return NextResponse.json(
         { error: 'Access denied to this family' },
@@ -171,10 +171,10 @@ export async function PATCH(request: Request) {
 }
 
 // DELETE /api/family-categories?id=xxx&familyId=xxx - Delete a family category
-export async function DELETE(request: Request) {
+export async function DELETE(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
+    const user = await getAuthUser(request);
+    if (!user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -190,7 +190,7 @@ export async function DELETE(request: Request) {
     }
 
     // Verify user is a family member (admin check could be added here)
-    const member = await verifyFamilyMembership(familyId, session.user.id);
+    const member = await verifyFamilyMembership(familyId, user.id);
     if (!member) {
       return NextResponse.json(
         { error: 'Access denied to this family' },

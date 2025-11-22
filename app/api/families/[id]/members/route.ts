@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server';
-import { auth } from '@/auth';
+import { NextResponse, NextRequest } from 'next/server';
+import { getAuthUser } from '@/lib/auth-helpers';
 import { db } from '@/db';
 import { familyMembers } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
@@ -20,12 +20,12 @@ async function verifyAdminAccess(familyId: string, userId: string) {
 
 // DELETE /api/families/[id]/members - Remove a member (admin only)
 export async function DELETE(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
+    const user = await getAuthUser(request);
+    if (!user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -41,7 +41,7 @@ export async function DELETE(
     }
 
     // Verify requester is admin
-    const admin = await verifyAdminAccess(familyId, session.user.id);
+    const admin = await verifyAdminAccess(familyId, user.id);
     if (!admin) {
       return NextResponse.json(
         { error: 'Only family admins can remove members' },
@@ -50,7 +50,7 @@ export async function DELETE(
     }
 
     // Prevent removing yourself
-    if (memberUserId === session.user.id) {
+    if (memberUserId === user.id) {
       return NextResponse.json(
         { error: 'Cannot remove yourself from the family. Use leave instead.' },
         { status: 400 }
@@ -88,12 +88,12 @@ export async function DELETE(
 
 // PATCH /api/families/[id]/members - Update member role (admin only)
 export async function PATCH(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
+    const user = await getAuthUser(request);
+    if (!user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -113,7 +113,7 @@ export async function PATCH(
     }
 
     // Verify requester is admin
-    const admin = await verifyAdminAccess(familyId, session.user.id);
+    const admin = await verifyAdminAccess(familyId, user.id);
     if (!admin) {
       return NextResponse.json(
         { error: 'Only family admins can change member roles' },

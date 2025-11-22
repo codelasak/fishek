@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server';
-import { auth } from '@/auth';
+import { NextResponse, NextRequest } from 'next/server';
+import { getAuthUser } from '@/lib/auth-helpers';
 import { db } from '@/db';
 import { spendingLimits, familyMembers, budgetAlerts } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
@@ -18,10 +18,10 @@ async function verifyAdminAccess(familyId: string, userId: string) {
 }
 
 // GET /api/spending-limits?familyId=xxx - Get spending limits for a family
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
+    const user = await getAuthUser(request);
+    if (!user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -36,7 +36,7 @@ export async function GET(request: Request) {
     }
 
     // Verify user is admin
-    const admin = await verifyAdminAccess(familyId, session.user.id);
+    const admin = await verifyAdminAccess(familyId, user.id);
     if (!admin) {
       return NextResponse.json(
         { error: 'Only family admins can view spending limits' },
@@ -62,10 +62,10 @@ export async function GET(request: Request) {
 }
 
 // POST /api/spending-limits - Create spending limit
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
+    const user = await getAuthUser(request);
+    if (!user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -81,7 +81,7 @@ export async function POST(request: Request) {
     }
 
     // Verify user is admin
-    const admin = await verifyAdminAccess(familyId, session.user.id);
+    const admin = await verifyAdminAccess(familyId, user.id);
     if (!admin) {
       return NextResponse.json(
         { error: 'Only family admins can set spending limits' },
@@ -114,10 +114,10 @@ export async function POST(request: Request) {
 }
 
 // DELETE /api/spending-limits?id=xxx&familyId=xxx - Delete spending limit
-export async function DELETE(request: Request) {
+export async function DELETE(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
+    const user = await getAuthUser(request);
+    if (!user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -133,7 +133,7 @@ export async function DELETE(request: Request) {
     }
 
     // Verify user is admin
-    const admin = await verifyAdminAccess(familyId, session.user.id);
+    const admin = await verifyAdminAccess(familyId, user.id);
     if (!admin) {
       return NextResponse.json(
         { error: 'Only family admins can delete spending limits' },

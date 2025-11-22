@@ -1,15 +1,15 @@
-import { NextResponse } from 'next/server';
-import { auth } from '@/auth';
+import { NextRequest, NextResponse } from 'next/server';
+import { getAuthUser } from '@/lib/auth-helpers';
 import { db } from '@/db';
 import { families, familyMembers } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { generateInviteCode } from '@/lib/inviteCode';
 
 // GET /api/families - Get user's families
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
+    const user = await getAuthUser(request);
+    if (!user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -26,7 +26,7 @@ export async function GET() {
       })
       .from(familyMembers)
       .innerJoin(families, eq(familyMembers.familyId, families.id))
-      .where(eq(familyMembers.userId, session.user.id))
+      .where(eq(familyMembers.userId, user.id))
       .execute();
 
     return NextResponse.json({ families: userFamilies });
@@ -40,10 +40,10 @@ export async function GET() {
 }
 
 // POST /api/families - Create a new family
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
+    const user = await getAuthUser(request);
+    if (!user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -92,7 +92,7 @@ export async function POST(request: Request) {
       .values({
         name: name.trim(),
         inviteCode,
-        createdBy: session.user.id,
+        createdBy: user.id,
       })
       .returning()
       .execute();
@@ -102,7 +102,7 @@ export async function POST(request: Request) {
       .insert(familyMembers)
       .values({
         familyId: newFamily.id,
-        userId: session.user.id,
+        userId: user.id,
         role: 'ADMIN',
       })
       .execute();

@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server';
-import { auth } from '@/auth';
+import { NextResponse, NextRequest } from 'next/server';
+import { getAuthUser } from '@/lib/auth-helpers';
 import { db } from '@/db';
 import { families, familyMembers, users } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
@@ -20,19 +20,19 @@ async function verifyFamilyAccess(familyId: string, userId: string) {
 
 // GET /api/families/[id] - Get family details with members
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
+    const user = await getAuthUser(request);
+    if (!user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { id: familyId } = await params;
 
     // Verify user is a member
-    const member = await verifyFamilyAccess(familyId, session.user.id);
+    const member = await verifyFamilyAccess(familyId, user.id);
     if (!member) {
       return NextResponse.json(
         { error: 'Access denied to this family' },
@@ -83,19 +83,19 @@ export async function GET(
 
 // PATCH /api/families/[id] - Update family name (admin only)
 export async function PATCH(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
+    const user = await getAuthUser(request);
+    if (!user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { id: familyId } = await params;
 
     // Verify user is admin
-    const member = await verifyFamilyAccess(familyId, session.user.id);
+    const member = await verifyFamilyAccess(familyId, user.id);
     if (!member || member.role !== 'ADMIN') {
       return NextResponse.json(
         { error: 'Only family admins can update family details' },
@@ -133,19 +133,19 @@ export async function PATCH(
 
 // DELETE /api/families/[id] - Delete family (admin only)
 export async function DELETE(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
+    const user = await getAuthUser(request);
+    if (!user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { id: familyId } = await params;
 
     // Verify user is admin
-    const member = await verifyFamilyAccess(familyId, session.user.id);
+    const member = await verifyFamilyAccess(familyId, user.id);
     if (!member || member.role !== 'ADMIN') {
       return NextResponse.json(
         { error: 'Only family admins can delete the family' },

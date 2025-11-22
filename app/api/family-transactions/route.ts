@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server';
-import { auth } from '@/auth';
+import { NextResponse, NextRequest } from 'next/server';
+import { getAuthUser } from '@/lib/auth-helpers';
 import { db } from '@/db';
 import { familyTransactions, familyMembers, familyCategories } from '@/db/schema';
 import { eq, and, desc } from 'drizzle-orm';
@@ -18,10 +18,10 @@ async function verifyFamilyMembership(familyId: string, userId: string) {
 }
 
 // GET /api/family-transactions?familyId=xxx - Get all transactions for a family
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
+    const user = await getAuthUser(request);
+    if (!user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -36,7 +36,7 @@ export async function GET(request: Request) {
     }
 
     // Verify user is a family member
-    const member = await verifyFamilyMembership(familyId, session.user.id);
+    const member = await verifyFamilyMembership(familyId, user.id);
     if (!member) {
       return NextResponse.json(
         { error: 'Access denied to this family' },
@@ -82,10 +82,10 @@ export async function GET(request: Request) {
 }
 
 // POST /api/family-transactions - Create a new family transaction
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
+    const user = await getAuthUser(request);
+    if (!user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -109,7 +109,7 @@ export async function POST(request: Request) {
     }
 
     // Verify user is a family member
-    const member = await verifyFamilyMembership(familyId, session.user.id);
+    const member = await verifyFamilyMembership(familyId, user.id);
     if (!member) {
       return NextResponse.json(
         { error: 'Access denied to this family' },
@@ -122,7 +122,7 @@ export async function POST(request: Request) {
       .insert(familyTransactions)
       .values({
         familyId,
-        userId: session.user.id,
+        userId: user.id,
         amount: amount.toString(),
         description: description.trim(),
         date,
@@ -145,10 +145,10 @@ export async function POST(request: Request) {
 }
 
 // PATCH /api/family-transactions - Update a family transaction
-export async function PATCH(request: Request) {
+export async function PATCH(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
+    const user = await getAuthUser(request);
+    if (!user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -173,7 +173,7 @@ export async function PATCH(request: Request) {
     }
 
     // Verify user is a family member
-    const member = await verifyFamilyMembership(familyId, session.user.id);
+    const member = await verifyFamilyMembership(familyId, user.id);
     if (!member) {
       return NextResponse.json(
         { error: 'Access denied to this family' },
@@ -202,7 +202,7 @@ export async function PATCH(request: Request) {
     }
 
     // Only transaction creator or family admin can edit
-    if (transaction.userId !== session.user.id && member.role !== 'ADMIN') {
+    if (transaction.userId !== user.id && member.role !== 'ADMIN') {
       return NextResponse.json(
         { error: 'You can only edit your own transactions' },
         { status: 403 }
@@ -243,10 +243,10 @@ export async function PATCH(request: Request) {
 }
 
 // DELETE /api/family-transactions?id=xxx&familyId=xxx - Delete a family transaction
-export async function DELETE(request: Request) {
+export async function DELETE(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
+    const user = await getAuthUser(request);
+    if (!user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -262,7 +262,7 @@ export async function DELETE(request: Request) {
     }
 
     // Verify user is a family member
-    const member = await verifyFamilyMembership(familyId, session.user.id);
+    const member = await verifyFamilyMembership(familyId, user.id);
     if (!member) {
       return NextResponse.json(
         { error: 'Access denied to this family' },
@@ -291,7 +291,7 @@ export async function DELETE(request: Request) {
     }
 
     // Only transaction creator or family admin can delete
-    if (transaction.userId !== session.user.id && member.role !== 'ADMIN') {
+    if (transaction.userId !== user.id && member.role !== 'ADMIN') {
       return NextResponse.json(
         { error: 'You can only delete your own transactions' },
         { status: 403 }
